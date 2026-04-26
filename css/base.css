@@ -1,0 +1,87 @@
+/* ============================================================
+   BASE — reset moderno + tipografía + utilidades elementales
+   ============================================================ */
+
+*,
+*::before,
+*::after { box-sizing: border-box; }
+
+* { margin: 0; }
+
+html, body { height: 100%; }
+
+html {
+  font-size: calc(var(--font-base) * var(--font-scale));
+  -webkit-text-size-adjust: 100%;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  line-height: var(--line-height);
+  color: var(--text);
+  background: var(--bg);
+  overflow-x: hidden;
+  transition: background var(--dur) var(--ease-out), color var(--dur) var(--ease-out);
+}
+
+img, svg, video { display: block; max-width: 100%; }
+svg { fill: none; }
+
+button, input, select, textarea {
+  font: inherit;
+  color: inherit;
+}
+
+button { background: none; border: 0; cursor: pointer; color: inherit; }
+
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+[hidden] { display: none !important; }
+
+/* Foco accesible */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: var(--radius-xs);
+}
+
+/* Scrollbar discreta */
+*::-webkit-scrollbar { width: 10px; height: 10px; }
+*::-webkit-scrollbar-track { background: transparent; }
+*::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border-radius: 999px;
+  border: 2px solid var(--bg);
+}
+*::-webkit-scrollbar-thumb:hover { background: var(--text-faint); }
+
+/* Selección */
+::selection {
+  background: hsl(var(--accent-h) var(--accent-s) var(--accent-l) / 0.35);
+  color: var(--text);
+}
+
+/* Util */
+.spacer { flex: 1; }
+.kbd {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  padding: 2px 6px;
+  border-radius: 6px;
+  background: var(--bg-soft);
+  border: 1px solid var(--border);
+  color: var(--text-mute);
+  margin-left: 8px;
+}
+
+.grad-text {
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}

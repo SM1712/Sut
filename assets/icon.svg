@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <defs>
+    <linearGradient id="sut-grad" x1="0" y1="0" x2="64" y2="64" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#4F6BFF"/>
+      <stop offset="100%" stop-color="#6E5BFF"/>
+    </linearGradient>
+    <linearGradient id="sut-shine" x1="0" y1="0" x2="0" y2="64" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.18"/>
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+  <rect x="2" y="2" width="60" height="60" rx="16" fill="url(#sut-grad)"/>
+  <rect x="2" y="2" width="60" height="60" rx="16" fill="url(#sut-shine)"/>
+  <path d="M18 22h28" stroke="#ffffff" stroke-width="3.2" stroke-linecap="round" opacity="0.55"/>
+  <path d="M18 32h20" stroke="#ffffff" stroke-width="3.2" stroke-linecap="round" opacity="0.85"/>
+  <path d="M18 42h14" stroke="#ffffff" stroke-width="3.2" stroke-linecap="round" opacity="0.4"/>
+  <path d="M40 40.5l4.2 4.5L52 36.5" stroke="#ffffff" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

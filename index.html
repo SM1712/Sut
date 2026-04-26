@@ -1,0 +1,724 @@
+<!doctype html>
+<html lang="es" data-theme="light">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="color-scheme" content="light dark" />
+  <meta name="description" content="SUT — Sistema Universal de Tareas. Organiza por curso, prioridad y fecha." />
+  <meta name="theme-color" content="#4F6BFF" />
+  <title>SUT — Sistema Universal de Tareas</title>
+  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Manrope:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Lora:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" />
+  <link rel="stylesheet" href="css/variables.css" />
+  <link rel="stylesheet" href="css/base.css" />
+  <link rel="stylesheet" href="css/components.css" />
+  <link rel="stylesheet" href="css/animations.css" />
+</head>
+<body>
+  <!-- ============ APP SHELL ============ -->
+  <div class="app" id="app" hidden>
+    <!-- Sidebar -->
+    <aside class="sidebar" aria-label="Navegación principal">
+      <div class="sidebar__brand">
+        <div class="brand-mark" aria-hidden="true">
+          <img src="assets/icon.svg" alt="" width="36" height="36" />
+        </div>
+        <div class="brand-text">
+          <span class="brand-text__title">SUT</span>
+          <span class="brand-text__subtitle">Tareas universitarias</span>
+        </div>
+      </div>
+
+      <nav class="sidebar__nav" aria-label="Vistas">
+        <button class="nav-item is-active" data-view="dashboard">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>
+          <span>Inicio</span>
+        </button>
+        <button class="nav-item" data-view="tasks">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+          <span>Tareas</span>
+          <span class="nav-item__badge" data-badge="tasks">0</span>
+        </button>
+        <button class="nav-item" data-view="courses">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+          <span>Cursos</span>
+        </button>
+        <button class="nav-item" data-view="calendar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+          <span>Calendario</span>
+        </button>
+        <button class="nav-item" data-view="tags">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.59 13.41 13.42 20.58a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><circle cx="7" cy="7" r="1.5"/></svg>
+          <span>Etiquetas</span>
+        </button>
+      </nav>
+
+      <div class="sidebar__footer">
+        <!-- User badge (visible cuando hay sesión) -->
+        <div class="user-badge" id="user-badge" hidden>
+          <img class="user-avatar" src="" alt="" />
+          <span class="user-name"></span>
+        </div>
+        <button class="btn btn--google" id="login-btn">
+          <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+          <span>Iniciar sesión</span>
+        </button>
+        <button class="btn btn--ghost btn--sm" id="logout-btn" hidden>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="15" height="15"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          <span>Cerrar sesión</span>
+        </button>
+        <button class="nav-item" id="open-settings">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          <span>Personalizar</span>
+        </button>
+        <button class="nav-item" id="open-help">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>
+          <span>Guía rápida</span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main -->
+    <main class="main" role="main">
+      <!-- Topbar -->
+      <header class="topbar">
+        <div class="topbar__left">
+          <button class="icon-btn icon-btn--ghost" id="sidebar-toggle" aria-label="Alternar menú">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+          </button>
+          <div class="search">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+            <input type="search" id="search-input" placeholder="Buscar tareas, cursos, etiquetas…" />
+            <kbd class="kbd">/</kbd>
+          </div>
+        </div>
+        <div class="topbar__right">
+          <button class="icon-btn icon-btn--ghost" id="theme-toggle" aria-label="Cambiar tema" title="Cambiar tema">
+            <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+            <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+          </button>
+          <button class="btn btn--primary" id="new-task-btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+            <span>Nueva tarea</span>
+          </button>
+        </div>
+      </header>
+
+      <!-- Views -->
+      <section class="view view--dashboard is-active" data-view="dashboard">
+        <div class="view__header">
+          <div>
+            <h1 class="view__title" id="greeting">Buen día</h1>
+            <p class="view__subtitle" id="greeting-sub">Esto es lo que tienes para hoy.</p>
+          </div>
+        </div>
+
+        <div class="stats-grid">
+          <article class="stat-card stat-card--primary">
+            <div class="stat-card__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></div>
+            <div>
+              <div class="stat-card__value" data-stat="due-today">0</div>
+              <div class="stat-card__label">Vencen hoy</div>
+            </div>
+          </article>
+          <article class="stat-card stat-card--warn">
+            <div class="stat-card__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><path d="M12 9v4M12 17h.01"/></svg></div>
+            <div>
+              <div class="stat-card__value" data-stat="overdue">0</div>
+              <div class="stat-card__label">Atrasadas</div>
+            </div>
+          </article>
+          <article class="stat-card stat-card--success">
+            <div class="stat-card__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="10"/></svg></div>
+            <div>
+              <div class="stat-card__value" data-stat="done-week">0</div>
+              <div class="stat-card__label">Completadas (7 días)</div>
+            </div>
+          </article>
+          <article class="stat-card">
+            <div class="stat-card__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></div>
+            <div>
+              <div class="stat-card__value" data-stat="courses">0</div>
+              <div class="stat-card__label">Cursos activos</div>
+            </div>
+          </article>
+        </div>
+
+        <div class="dashboard-grid">
+          <section class="panel">
+            <header class="panel__header">
+              <h2 class="panel__title">Próximas tareas</h2>
+              <div class="chip-group" role="tablist">
+                <button class="chip is-active" data-filter="all">Todas</button>
+                <button class="chip" data-filter="today">Hoy</button>
+                <button class="chip" data-filter="week">Esta semana</button>
+                <button class="chip" data-filter="overdue">Atrasadas</button>
+              </div>
+            </header>
+            <div class="task-list" id="dashboard-task-list" role="list"></div>
+          </section>
+
+          <aside class="panel panel--soft">
+            <header class="panel__header">
+              <h2 class="panel__title">Por curso</h2>
+            </header>
+            <div class="course-pills" id="course-pills"></div>
+
+            <header class="panel__header" style="margin-top:24px">
+              <h2 class="panel__title">Por prioridad</h2>
+            </header>
+            <ul class="priority-summary" id="priority-summary">
+              <li class="priority-summary__row" data-priority="urgent"><span class="prio-dot prio-dot--urgent"></span><span class="priority-summary__label">Urgente</span><span class="priority-summary__count">0</span></li>
+              <li class="priority-summary__row" data-priority="high"><span class="prio-dot prio-dot--high"></span><span class="priority-summary__label">Alta</span><span class="priority-summary__count">0</span></li>
+              <li class="priority-summary__row" data-priority="medium"><span class="prio-dot prio-dot--medium"></span><span class="priority-summary__label">Media</span><span class="priority-summary__count">0</span></li>
+              <li class="priority-summary__row" data-priority="low"><span class="prio-dot prio-dot--low"></span><span class="priority-summary__label">Baja</span><span class="priority-summary__count">0</span></li>
+            </ul>
+          </aside>
+        </div>
+      </section>
+
+      <section class="view view--tasks" data-view="tasks">
+        <div class="view__header">
+          <div>
+            <h1 class="view__title">Tareas</h1>
+            <p class="view__subtitle">Filtra, organiza y completa.</p>
+          </div>
+          <button class="btn btn--primary" id="new-task-btn-tasks">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+            <span>Nueva tarea</span>
+          </button>
+        </div>
+        <div class="filters-bar">
+          <select class="select select--sm" id="filter-course"><option value="">Todos los cursos</option></select>
+          <select class="select select--sm" id="filter-priority">
+            <option value="">Todas las prioridades</option>
+            <option value="urgent">🔴 Urgente</option>
+            <option value="high">🟠 Alta</option>
+            <option value="medium">🟡 Media</option>
+            <option value="low">🟢 Baja</option>
+          </select>
+          <select class="select select--sm" id="filter-status">
+            <option value="">Todos los estados</option>
+            <option value="pending">Pendientes</option>
+            <option value="done">Completadas</option>
+          </select>
+          <select class="select select--sm" id="sort-by">
+            <option value="date">📅 Por fecha</option>
+            <option value="priority">🎯 Por prioridad</option>
+            <option value="created">🕐 Recientes</option>
+            <option value="alpha">🔤 Alfabético</option>
+          </select>
+        </div>
+        <div class="task-list task-list--full" id="tasks-list" role="list"></div>
+      </section>
+
+      <section class="view view--courses" data-view="courses">
+        <div class="view__header">
+          <div>
+            <h1 class="view__title">Cursos</h1>
+            <p class="view__subtitle">Cada curso, su color y su carga.</p>
+          </div>
+          <button class="btn btn--primary" id="new-course-btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+            <span>Nuevo curso</span>
+          </button>
+        </div>
+        <div class="cards-grid" id="courses-grid"></div>
+      </section>
+
+      <section class="view view--calendar" data-view="calendar">
+        <div class="view__header">
+          <div>
+            <h1 class="view__title">Calendario</h1>
+            <p class="view__subtitle">Eventos, semanas clave y entregas.</p>
+          </div>
+          <div class="toolbar">
+            <button class="icon-btn" id="cal-prev" aria-label="Mes anterior"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 18l-6-6 6-6"/></svg></button>
+            <span class="cal-month" id="cal-month">—</span>
+            <button class="icon-btn" id="cal-next" aria-label="Mes siguiente"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg></button>
+            <button class="btn btn--ghost" id="cal-today">Hoy</button>
+            <button class="btn btn--primary" id="new-event-btn">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+              Nuevo evento
+            </button>
+          </div>
+        </div>
+        <div class="calendar" id="calendar"></div>
+      </section>
+
+      <section class="view view--tags" data-view="tags">
+        <div class="view__header">
+          <div>
+            <h1 class="view__title">Etiquetas</h1>
+            <p class="view__subtitle">Tipos, ciclos y categorías personalizadas.</p>
+          </div>
+          <button class="btn btn--primary" id="new-tag-btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+            <span>Nueva etiqueta</span>
+          </button>
+        </div>
+        <div class="tags-grid" id="tags-grid"></div>
+      </section>
+    </main>
+  </div>
+
+  <!-- ============ ONBOARDING ============ -->
+  <div class="onboarding" id="onboarding" hidden>
+    <div class="onboarding__bg" aria-hidden="true">
+      <span class="blob blob--1"></span>
+      <span class="blob blob--2"></span>
+      <span class="blob blob--3"></span>
+    </div>
+
+    <div class="onboarding__card">
+      <div class="onboarding__progress" id="ob-progress"></div>
+
+      <div class="onboarding__slides" id="ob-slides">
+        <!-- Slide 1: Bienvenida -->
+        <article class="ob-slide is-active" data-step="0">
+          <div class="ob-illustration">
+            <div class="hero-mark">
+              <img src="assets/icon.svg" alt="" width="96" height="96" />
+              <span class="hero-pulse"></span>
+            </div>
+            <div class="floating floating--1">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+            </div>
+            <div class="floating floating--2">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+            </div>
+            <div class="floating floating--3">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41 13.42 20.58a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/></svg>
+            </div>
+          </div>
+          <h2 class="ob-title">Hola 👋, soy <span class="grad-text">SUT</span></h2>
+          <p class="ob-text">Tu <strong>Sistema Universal de Tareas</strong>. Te ayudo a no olvidar nada de la universidad: tareas, exámenes, proyectos. Te lo enseño en 30 segundos.</p>
+        </article>
+
+        <!-- Slide 2: Cursos -->
+        <article class="ob-slide" data-step="1">
+          <div class="ob-illustration">
+            <div class="course-stack">
+              <div class="course-card-demo" style="--c:#4F6BFF">Cálculo</div>
+              <div class="course-card-demo" style="--c:#22C55E">Programación</div>
+              <div class="course-card-demo" style="--c:#F59E0B">Filosofía</div>
+              <div class="course-card-demo" style="--c:#EC4899">Inglés</div>
+            </div>
+          </div>
+          <h2 class="ob-title">1. Crea tus <span class="grad-text">cursos</span></h2>
+          <p class="ob-text">Cada curso tiene su color para que ubiques todo de un vistazo. Agrega los que estés llevando este ciclo y listo.</p>
+        </article>
+
+        <!-- Slide 3: Tareas con etiquetas -->
+        <article class="ob-slide" data-step="2">
+          <div class="ob-illustration">
+            <div class="task-card-demo">
+              <div class="task-card-demo__head">
+                <span class="prio-bar prio-bar--high"></span>
+                <span class="task-card-demo__title">Ensayo: ética en la IA</span>
+              </div>
+              <div class="task-card-demo__meta">
+                <span class="tag-pill" style="--c:#4F6BFF">Filosofía</span>
+                <span class="tag-pill" style="--c:#6E5BFF">Investigación</span>
+                <span class="tag-pill" style="--c:#22C55E">Ciclo III</span>
+              </div>
+            </div>
+          </div>
+          <h2 class="ob-title">2. Suma <span class="grad-text">etiquetas</span></h2>
+          <p class="ob-text">Marca si es <strong>tarea normal</strong>, <strong>proyecto de investigación</strong>, qué <strong>ciclo</strong>, o lo que quieras. Las etiquetas son tuyas: créalas como gustes.</p>
+        </article>
+
+        <!-- Slide 4: Prioridades visuales -->
+        <article class="ob-slide" data-step="3">
+          <div class="ob-illustration">
+            <div class="priority-demo">
+              <div class="priority-demo__row"><span class="prio-flag prio-flag--urgent"></span><strong>Urgente</strong><small>Pulsa y resalta</small></div>
+              <div class="priority-demo__row"><span class="prio-flag prio-flag--high"></span><strong>Alta</strong><small>Rojo cálido</small></div>
+              <div class="priority-demo__row"><span class="prio-flag prio-flag--medium"></span><strong>Media</strong><small>Ámbar</small></div>
+              <div class="priority-demo__row"><span class="prio-flag prio-flag--low"></span><strong>Baja</strong><small>Verde tranquilo</small></div>
+            </div>
+          </div>
+          <h2 class="ob-title">3. Asigna <span class="grad-text">prioridad</span></h2>
+          <p class="ob-text">Cada nivel tiene un color y una señal. Lo <strong>urgente</strong> incluso pulsa para que no se te escape.</p>
+        </article>
+
+        <!-- Slide 5: Fechas y alertas -->
+        <article class="ob-slide" data-step="4">
+          <div class="ob-illustration">
+            <div class="alert-demo">
+              <div class="alert-demo__clock">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+              </div>
+              <div class="alert-demo__bell"><span class="bell-ring"></span></div>
+            </div>
+          </div>
+          <h2 class="ob-title">4. Fecha y <span class="grad-text">alertas</span></h2>
+          <p class="ob-text">Coloca día y hora de entrega. SUT te avisa cuando se acerca el vencimiento — sin que tengas que mirar el reloj.</p>
+        </article>
+
+        <!-- Slide 6: Personalización -->
+        <article class="ob-slide" data-step="5">
+          <div class="ob-illustration">
+            <div class="theme-demo">
+              <div class="theme-swatch" style="--c:#4F6BFF"></div>
+              <div class="theme-swatch" style="--c:#22C55E"></div>
+              <div class="theme-swatch" style="--c:#F59E0B"></div>
+              <div class="theme-swatch" style="--c:#EC4899"></div>
+              <div class="theme-swatch" style="--c:#0EA5E9"></div>
+            </div>
+            <div class="font-demo">
+              <span style="font-family:Inter">Aa</span>
+              <span style="font-family:Manrope">Aa</span>
+              <span style="font-family:'Plus Jakarta Sans'">Aa</span>
+              <span style="font-family:Lora">Aa</span>
+            </div>
+          </div>
+          <h2 class="ob-title">5. Hazlo <span class="grad-text">tuyo</span></h2>
+          <p class="ob-text">Cambia el color, la fuente, el tamaño y el modo claro/oscuro. SUT se adapta a ti, no al revés.</p>
+        </article>
+
+        <!-- Slide 7: Listo -->
+        <article class="ob-slide" data-step="6">
+          <div class="ob-illustration">
+            <div class="ready-mark">
+              <svg viewBox="0 0 80 80" fill="none">
+                <circle cx="40" cy="40" r="36" stroke="currentColor" stroke-width="3" class="ready-circle"/>
+                <path d="M26 41l10 10 20-22" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" class="ready-check"/>
+              </svg>
+            </div>
+          </div>
+          <h2 class="ob-title">¡Todo <span class="grad-text">listo</span>!</h2>
+          <p class="ob-text">Vamos a crear tu primer curso y tu primera tarea. Tranqui, lo guardamos todo en tu navegador.</p>
+        </article>
+      </div>
+
+      <div class="onboarding__nav">
+        <button class="btn btn--ghost" id="ob-skip">Saltar</button>
+        <div class="onboarding__dots" id="ob-dots"></div>
+        <button class="btn btn--primary" id="ob-next">Siguiente
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ TASK MODAL ============ -->
+  <div class="modal" id="task-modal" hidden>
+    <div class="modal__backdrop" data-close></div>
+    <div class="modal__panel" role="dialog" aria-modal="true" aria-labelledby="task-modal-title">
+      <header class="modal__header">
+        <h2 id="task-modal-title">Nueva tarea</h2>
+        <button class="icon-btn icon-btn--ghost" data-close aria-label="Cerrar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+      </header>
+      <form class="modal__body" id="task-form">
+        <input type="hidden" name="id" />
+
+        <label class="field">
+          <span class="field__label">Título</span>
+          <input class="input" type="text" name="title" required placeholder="Ej. Entregar ensayo de filosofía" />
+        </label>
+
+        <label class="field">
+          <span class="field__label">Descripción <small>(opcional)</small></span>
+          <textarea class="input" name="description" rows="2" placeholder="Detalles, link al aula virtual…"></textarea>
+        </label>
+
+        <label class="field">
+          <span class="field__label">Curso</span>
+          <select class="input" name="courseId">
+            <option value="">Sin curso</option>
+          </select>
+        </label>
+
+        <label class="field">
+          <span class="field__label">Prioridad base</span>
+          <div class="priority-picker" role="radiogroup">
+            <label class="prio-opt"><input type="radio" name="priority" value="low"/><span class="prio-flag prio-flag--low"></span>Baja</label>
+            <label class="prio-opt"><input type="radio" name="priority" value="medium" checked/><span class="prio-flag prio-flag--medium"></span>Media</label>
+            <label class="prio-opt"><input type="radio" name="priority" value="high"/><span class="prio-flag prio-flag--high"></span>Alta</label>
+            <label class="prio-opt"><input type="radio" name="priority" value="urgent"/><span class="prio-flag prio-flag--urgent"></span>Urgente</label>
+          </div>
+        </label>
+
+        <label class="field field--inline">
+          <div class="toggle-row">
+            <div>
+              <span class="field__label">Prioridad escalante ⚡</span>
+              <p class="field__hint">Se sube automáticamente conforme se acerca la fecha de entrega.</p>
+            </div>
+            <label class="toggle">
+              <input type="checkbox" id="escalating-toggle" />
+              <span class="toggle__track"><span class="toggle__thumb"></span></span>
+            </label>
+          </div>
+        </label>
+
+        <div class="field-row">
+          <label class="field">
+            <span class="field__label">Fecha</span>
+            <input class="input" type="date" name="dueDate" />
+          </label>
+          <label class="field">
+            <span class="field__label">Hora</span>
+            <input class="input" type="time" name="dueTime" />
+          </label>
+          <label class="field">
+            <span class="field__label">Recordar</span>
+            <select class="input" name="reminder">
+              <option value="">Sin alerta</option>
+              <option value="0">A la hora exacta</option>
+              <option value="15">15 minutos antes</option>
+              <option value="60">1 hora antes</option>
+              <option value="1440">1 día antes</option>
+              <option value="2880">2 días antes</option>
+            </select>
+          </label>
+        </div>
+
+        <label class="field">
+          <span class="field__label">Etiquetas</span>
+          <div class="tag-picker" id="tag-picker"></div>
+        </label>
+
+        <footer class="modal__footer">
+          <button type="button" class="btn btn--ghost" id="delete-task" hidden>Eliminar</button>
+          <div class="spacer"></div>
+          <button type="button" class="btn btn--ghost" data-close>Cancelar</button>
+          <button type="submit" class="btn btn--primary">Guardar</button>
+        </footer>
+      </form>
+    </div>
+  </div>
+
+  <!-- ============ COURSE MODAL ============ -->
+  <div class="modal" id="course-modal" hidden>
+    <div class="modal__backdrop" data-close></div>
+    <div class="modal__panel modal__panel--sm" role="dialog" aria-modal="true">
+      <header class="modal__header"><h2 id="course-modal-title">Nuevo curso</h2>
+        <button class="icon-btn icon-btn--ghost" data-close aria-label="Cerrar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+      </header>
+      <form class="modal__body" id="course-form">
+        <input type="hidden" name="id" />
+        <label class="field">
+          <span class="field__label">Nombre</span>
+          <input class="input" type="text" name="name" required placeholder="Ej. Cálculo II" />
+        </label>
+        <div class="field-row">
+          <label class="field">
+            <span class="field__label">Código <small>(opcional)</small></span>
+            <input class="input" type="text" name="code" placeholder="MAT202" />
+          </label>
+          <label class="field">
+            <span class="field__label">Profesor <small>(opcional)</small></span>
+            <input class="input" type="text" name="teacher" placeholder="Nombre" />
+          </label>
+        </div>
+        <label class="field">
+          <span class="field__label">Color</span>
+          <div class="color-picker" id="course-color-picker"></div>
+        </label>
+        <footer class="modal__footer">
+          <button type="button" class="btn btn--ghost" id="delete-course" hidden>Eliminar</button>
+          <div class="spacer"></div>
+          <button type="button" class="btn btn--ghost" data-close>Cancelar</button>
+          <button type="submit" class="btn btn--primary">Guardar</button>
+        </footer>
+      </form>
+    </div>
+  </div>
+
+  <!-- ============ TAG MODAL ============ -->
+  <div class="modal" id="tag-modal" hidden>
+    <div class="modal__backdrop" data-close></div>
+    <div class="modal__panel modal__panel--sm" role="dialog" aria-modal="true">
+      <header class="modal__header"><h2 id="tag-modal-title">Nueva etiqueta</h2>
+        <button class="icon-btn icon-btn--ghost" data-close aria-label="Cerrar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+      </header>
+      <form class="modal__body" id="tag-form">
+        <input type="hidden" name="id" />
+        <label class="field">
+          <span class="field__label">Nombre</span>
+          <input class="input" type="text" name="name" required placeholder="Ej. Investigación, Ciclo III, Examen" />
+        </label>
+        <label class="field">
+          <span class="field__label">Categoría</span>
+          <select class="input" name="category">
+            <option value="general">General</option>
+            <option value="cycle">Ciclo</option>
+            <option value="type">Tipo de tarea</option>
+            <option value="status">Estado</option>
+          </select>
+        </label>
+        <label class="field">
+          <span class="field__label">Prioridad por defecto</span>
+          <select class="input" name="defaultPriority"></select>
+          <p class="field__hint">Al asignar esta etiqueta a una tarea, se sugerirá esta prioridad automáticamente.</p>
+        </label>
+        <label class="field">
+          <span class="field__label">Color</span>
+          <div class="color-picker" id="tag-color-picker"></div>
+        </label>
+        <footer class="modal__footer">
+          <button type="button" class="btn btn--ghost" id="delete-tag" hidden>Eliminar</button>
+          <div class="spacer"></div>
+          <button type="button" class="btn btn--ghost" data-close>Cancelar</button>
+          <button type="submit" class="btn btn--primary">Guardar</button>
+        </footer>
+      </form>
+    </div>
+  </div>
+
+  <!-- ============ EVENT MODAL ============ -->
+  <div class="modal" id="event-modal" hidden>
+    <div class="modal__backdrop" data-close></div>
+    <div class="modal__panel modal__panel--sm" role="dialog" aria-modal="true" aria-labelledby="event-modal-title">
+      <header class="modal__header">
+        <h2 id="event-modal-title">Nuevo evento</h2>
+        <button class="icon-btn icon-btn--ghost" data-close aria-label="Cerrar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+      </header>
+      <form class="modal__body" id="event-form">
+        <input type="hidden" name="id" />
+        <label class="field">
+          <span class="field__label">Nombre del evento</span>
+          <input class="input" type="text" name="title" required placeholder="Ej. Semana de Exámenes Parciales" />
+        </label>
+        <div class="field-row">
+          <label class="field">
+            <span class="field__label">Tipo</span>
+            <select class="input" name="type"></select>
+          </label>
+        </div>
+        <div class="field-row">
+          <label class="field">
+            <span class="field__label">Fecha inicio</span>
+            <input class="input" type="date" name="startDate" required />
+          </label>
+          <label class="field">
+            <span class="field__label">Fecha fin</span>
+            <input class="input" type="date" name="endDate" />
+          </label>
+        </div>
+        <label class="field">
+          <span class="field__label">Descripción <small>(opcional)</small></span>
+          <textarea class="input" name="description" rows="2" placeholder="Detalles del evento…"></textarea>
+        </label>
+        <label class="field">
+          <span class="field__label">Color</span>
+          <div class="color-picker" id="event-color-picker"></div>
+        </label>
+        <footer class="modal__footer">
+          <button type="button" class="btn btn--ghost" id="delete-event" hidden>Eliminar</button>
+          <div class="spacer"></div>
+          <button type="button" class="btn btn--ghost" data-close>Cancelar</button>
+          <button type="submit" class="btn btn--primary">Guardar</button>
+        </footer>
+      </form>
+    </div>
+  </div>
+
+  <!-- ============ SETTINGS DRAWER ============ -->
+  <aside class="drawer" id="settings-drawer" hidden>
+    <div class="drawer__backdrop" data-close></div>
+    <div class="drawer__panel" role="dialog" aria-modal="true" aria-labelledby="settings-title">
+      <header class="drawer__header">
+        <h2 id="settings-title">Personalizar</h2>
+        <button class="icon-btn icon-btn--ghost" data-close aria-label="Cerrar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+      </header>
+      <div class="drawer__body">
+
+        <section class="setting-block">
+          <h3 class="setting-block__title">Tema</h3>
+          <div class="theme-toggle-group" role="radiogroup">
+            <label class="theme-pick"><input type="radio" name="theme" value="light"/><span>☀️ Claro</span></label>
+            <label class="theme-pick"><input type="radio" name="theme" value="dark"/><span>🌙 Oscuro</span></label>
+            <label class="theme-pick"><input type="radio" name="theme" value="system"/><span>🖥 Sistema</span></label>
+          </div>
+        </section>
+
+        <section class="setting-block">
+          <h3 class="setting-block__title">Color principal</h3>
+          <div class="color-picker" id="accent-picker"></div>
+        </section>
+
+        <section class="setting-block">
+          <h3 class="setting-block__title">Color de botones</h3>
+          <div class="color-picker" id="button-picker"></div>
+        </section>
+
+        <section class="setting-block">
+          <h3 class="setting-block__title">Color del texto</h3>
+          <div class="color-picker color-picker--text" id="text-picker"></div>
+        </section>
+
+        <section class="setting-block">
+          <h3 class="setting-block__title">Tipografía</h3>
+          <div class="font-picker" id="font-picker">
+            <button type="button" class="font-pick" data-font="Inter" style="font-family:Inter">Inter</button>
+            <button type="button" class="font-pick" data-font="Manrope" style="font-family:Manrope">Manrope</button>
+            <button type="button" class="font-pick" data-font="Plus Jakarta Sans" style="font-family:'Plus Jakarta Sans'">Plus Jakarta</button>
+            <button type="button" class="font-pick" data-font="Lora" style="font-family:Lora">Lora</button>
+            <button type="button" class="font-pick" data-font="JetBrains Mono" style="font-family:'JetBrains Mono'">JetBrains</button>
+            <button type="button" class="font-pick" data-font="system-ui" style="font-family:system-ui">Sistema</button>
+          </div>
+        </section>
+
+        <section class="setting-block">
+          <h3 class="setting-block__title">Tamaño de fuente</h3>
+          <div class="size-picker">
+            <button type="button" class="size-pick" data-size="0.92">A</button>
+            <button type="button" class="size-pick" data-size="1">A</button>
+            <button type="button" class="size-pick" data-size="1.08">A</button>
+            <button type="button" class="size-pick" data-size="1.16">A</button>
+          </div>
+          <input type="range" min="0.85" max="1.25" step="0.01" id="font-size-slider" />
+          <div class="setting-block__hint" id="font-size-hint">100%</div>
+        </section>
+
+        <section class="setting-block">
+          <h3 class="setting-block__title">Radio de bordes</h3>
+          <input type="range" min="4" max="22" step="1" id="radius-slider" />
+        </section>
+
+        <section class="setting-block">
+          <h3 class="setting-block__title">Datos</h3>
+          <div class="setting-actions">
+            <button type="button" class="btn btn--ghost" id="export-data">Exportar</button>
+            <button type="button" class="btn btn--ghost" id="import-data">Importar</button>
+            <button type="button" class="btn btn--danger" id="reset-data">Restablecer</button>
+          </div>
+          <div class="setting-block__hint">Tu información se guarda solo en este navegador.</div>
+        </section>
+
+        <section class="setting-block">
+          <h3 class="setting-block__title">Volver a ver el tutorial</h3>
+          <button type="button" class="btn btn--ghost" id="replay-onboarding">Mostrar guía rápida</button>
+        </section>
+
+      </div>
+    </div>
+  </aside>
+
+  <!-- ============ TOASTS ============ -->
+  <div class="toaster" id="toaster" aria-live="polite" aria-atomic="true"></div>
+
+  <!-- ============ EMPTY TEMPLATE ============ -->
+  <template id="empty-state-template">
+    <div class="empty">
+      <div class="empty__art">
+        <svg viewBox="0 0 64 64" fill="none">
+          <rect x="10" y="14" width="44" height="38" rx="6" stroke="currentColor" stroke-width="2"/>
+          <path d="M18 24h28M18 32h22M18 40h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <h3 class="empty__title">Aún no hay nada por aquí</h3>
+      <p class="empty__text">Crea tu primer elemento para empezar.</p>
+    </div>
+  </template>
+
+  <input type="file" id="import-file" accept="application/json" hidden />
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>

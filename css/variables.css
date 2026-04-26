@@ -1,0 +1,186 @@
+/* ============================================================
+   SUT — DESIGN TOKENS
+   Cada token es una variable CSS, así toda la app se repinta
+   con un solo cambio. La capa de personalización del usuario
+   sobre-escribe estos valores en :root[data-theme=...] o vía JS.
+   ============================================================ */
+
+:root {
+  /* ---- Marca / acentos (modificable por el usuario) ---- */
+  --accent-h: 232;
+  --accent-s: 100%;
+  --accent-l: 65%;
+  --accent: hsl(var(--accent-h) var(--accent-s) var(--accent-l));
+  --accent-strong: hsl(var(--accent-h) var(--accent-s) calc(var(--accent-l) - 8%));
+  --accent-soft: hsl(var(--accent-h) var(--accent-s) calc(var(--accent-l) + 28%) / 0.18);
+  --accent-contrast: #ffffff;
+
+  --accent-2-h: 252;
+  --accent-2-s: 95%;
+  --accent-2-l: 68%;
+  --accent-2: hsl(var(--accent-2-h) var(--accent-2-s) var(--accent-2-l));
+
+  --button-color: var(--accent);
+  --button-color-strong: var(--accent-strong);
+  --button-text: #ffffff;
+
+  /* ---- Estado / semántica ---- */
+  --success: #10b981;
+  --success-soft: #10b9811f;
+  --warn: #f59e0b;
+  --warn-soft: #f59e0b1f;
+  --danger: #ef4444;
+  --danger-soft: #ef44441f;
+  --info: #0ea5e9;
+  --info-soft: #0ea5e91f;
+
+  /* ---- Prioridad ---- */
+  --prio-low: #10b981;
+  --prio-medium: #f59e0b;
+  --prio-high: #ef4444;
+  --prio-urgent: #dc2626;
+
+  /* ---- Tipografía ---- */
+  --font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, Menlo, monospace;
+  --font-base: 16px;
+  --font-scale: 1; /* multiplicador del usuario */
+  --line-height: 1.55;
+
+  /* ---- Forma ---- */
+  --radius-xs: 6px;
+  --radius-sm: 10px;
+  --radius: 14px;        /* base — modificable */
+  --radius-lg: 22px;
+  --radius-pill: 999px;
+
+  /* ---- Espaciado (escalas) ---- */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-7: 32px;
+  --space-8: 40px;
+  --space-9: 56px;
+
+  /* ---- Sombra ---- */
+  --shadow-1: 0 1px 2px rgb(15 23 42 / 6%), 0 1px 1px rgb(15 23 42 / 4%);
+  --shadow-2: 0 6px 20px -6px rgb(15 23 42 / 12%), 0 2px 6px -2px rgb(15 23 42 / 8%);
+  --shadow-3: 0 24px 60px -20px rgb(15 23 42 / 24%), 0 8px 20px -10px rgb(15 23 42 / 14%);
+  --shadow-accent: 0 10px 28px -10px hsl(var(--accent-h) var(--accent-s) var(--accent-l) / 50%);
+
+  /* ---- Animación ---- */
+  --ease-out: cubic-bezier(.22, 1, .36, 1);
+  --ease-in-out: cubic-bezier(.65, 0, .35, 1);
+  --ease-spring: cubic-bezier(.34, 1.56, .64, 1);
+  --dur-fast: 140ms;
+  --dur: 220ms;
+  --dur-slow: 420ms;
+
+  /* ---- Layout ---- */
+  --sidebar-w: 248px;
+  --topbar-h: 68px;
+  --content-max: 1280px;
+
+  /* ---- Z ---- */
+  --z-sidebar: 30;
+  --z-topbar: 40;
+  --z-drawer: 60;
+  --z-modal: 70;
+  --z-toast: 80;
+  --z-onboarding: 90;
+}
+
+/* ============== TEMA CLARO (DEFAULT) ============== */
+:root,
+:root[data-theme="light"] {
+  color-scheme: light;
+
+  --bg: #f6f7fb;
+  --bg-elevated: #ffffff;
+  --bg-soft: #eef0f7;
+  --bg-sunken: #eaecf3;
+  --bg-hover: #f1f3f9;
+
+  --surface: #ffffff;
+  --surface-2: #f8f9fd;
+
+  --border: #e3e6ef;
+  --border-strong: #cdd2e0;
+  --divider: #eef0f7;
+
+  --text: #0f172a;
+  --text-soft: #475569;
+  --text-mute: #64748b;
+  --text-faint: #94a3b8;
+
+  --backdrop: rgb(15 23 42 / 38%);
+}
+
+/* ============== TEMA OSCURO ============== */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  --bg: #0b0f1a;
+  --bg-elevated: #121826;
+  --bg-soft: #161d2e;
+  --bg-sunken: #0a0e18;
+  --bg-hover: #1a2235;
+
+  --surface: #121826;
+  --surface-2: #161d2e;
+
+  --border: #232c44;
+  --border-strong: #2d3956;
+  --divider: #1d2438;
+
+  --text: #f1f5f9;
+  --text-soft: #cbd5e1;
+  --text-mute: #94a3b8;
+  --text-faint: #64748b;
+
+  --backdrop: rgb(0 0 0 / 60%);
+
+  --shadow-1: 0 1px 2px rgb(0 0 0 / 30%);
+  --shadow-2: 0 8px 24px -8px rgb(0 0 0 / 50%);
+  --shadow-3: 0 24px 60px -20px rgb(0 0 0 / 60%);
+  --accent-soft: hsl(var(--accent-h) var(--accent-s) var(--accent-l) / 0.18);
+}
+
+/* Auto / sistema (solo si data-theme="system") */
+@media (prefers-color-scheme: dark) {
+  :root[data-theme="system"] {
+    color-scheme: dark;
+
+    --bg: #0b0f1a;
+    --bg-elevated: #121826;
+    --bg-soft: #161d2e;
+    --bg-sunken: #0a0e18;
+    --bg-hover: #1a2235;
+
+    --surface: #121826;
+    --surface-2: #161d2e;
+
+    --border: #232c44;
+    --border-strong: #2d3956;
+    --divider: #1d2438;
+
+    --text: #f1f5f9;
+    --text-soft: #cbd5e1;
+    --text-mute: #94a3b8;
+    --text-faint: #64748b;
+
+    --backdrop: rgb(0 0 0 / 60%);
+  }
+}
+
+/* Densidad reducida si el usuario lo prefiere */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --dur-fast: 0ms;
+    --dur: 0ms;
+    --dur-slow: 0ms;
+  }
+}

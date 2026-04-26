@@ -1,0 +1,40 @@
+# Dependencias
+node_modules/
+.npm/
+
+# Variables de entorno y secretos
+.env
+.env.*
+!.env.example
+*.key
+
+# Firebase service account (NUNCA subas esto)
+service-account*.json
+firebase-admin*.json
+
+# Build output
+dist/
+build/
+.cache/
+
+# IDEs
+.vscode/settings.json
+.idea/
+*.suo
+*.user
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Claude Code
+.claude/
+
+# Logs
+*.log
+npm-debug.log*
+
+# Firebase local
+.firebase/
+firebase-debug.log
