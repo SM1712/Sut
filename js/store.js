@@ -18,6 +18,10 @@ const DEFAULT_STATE = {
   meta: {
     createdAt: new Date().toISOString(),
     onboarded: false,
+    spaceId:   null,   // código del espacio compartido activo
+    spaceName: '',
+    uid:       null,
+    email:     null,
   },
 };
 
@@ -71,6 +75,13 @@ class Store extends EventTarget {
   on(event, handler) {
     this.addEventListener(event, handler);
     return () => this.removeEventListener(event, handler);
+  }
+
+  /* ─── Spaces ─────────────────────────────────────────────────── */
+  setSpaceId(spaceId, spaceName = '') {
+    this.state.meta.spaceId   = spaceId   || null;
+    this.state.meta.spaceName = spaceName || '';
+    this._save();
   }
 
   /* ─── Onboarding ─────────────────────────────────────────────── */

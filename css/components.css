@@ -1529,3 +1529,151 @@ input[type="range"]::-moz-range-thumb {
   stroke-dashoffset: 60;
   animation: drawCheck 0.5s var(--ease-out) 0.7s forwards;
 }
+
+/* ====================== SPACE CHIP (sidebar) ====================== */
+.space-chip {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  background: var(--accent-soft);
+  border: 1px solid var(--accent-soft);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+  margin-bottom: var(--space-2);
+  color: var(--accent);
+}
+.space-chip:hover {
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
+  border-color: var(--accent);
+}
+.space-chip svg { flex-shrink: 0; }
+.space-chip__info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.space-chip__name {
+  font-size: 0.78rem;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--accent);
+}
+.space-chip__code {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  opacity: 0.7;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* ====================== SPACE MODAL ====================== */
+.modal--space .modal__panel {
+  max-width: 420px;
+}
+.modal__header--center {
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  text-align: center;
+  padding-bottom: 0;
+}
+.space-modal__icon {
+  width: 56px;
+  height: 56px;
+  background: var(--accent-soft);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent);
+  margin-bottom: var(--space-1);
+}
+.space-modal__sub {
+  font-size: 0.82rem;
+  color: var(--text-2);
+  max-width: 30ch;
+  line-height: 1.5;
+  margin: 0;
+}
+/* Tabs del modal de espacio */
+.space-tabs {
+  display: flex;
+  gap: var(--space-2);
+  border-bottom: 1px solid var(--border);
+  margin-top: var(--space-4);
+  margin-bottom: 0;
+}
+.space-tab {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-2) var(--space-3);
+  border: none;
+  background: none;
+  color: var(--text-2);
+  font-weight: 500;
+  font-size: 0.85rem;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+  transition: color 0.15s, border-color 0.15s;
+}
+.space-tab:hover { color: var(--text-1); }
+.space-tab.is-active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+  font-weight: 600;
+}
+
+/* ====================== ONBOARDING SYNC DEMO ====================== */
+.sync-demo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-4);
+}
+.sync-demo__bubble {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: var(--accent-soft);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.6rem;
+  animation: syncPulse 2s ease-in-out infinite;
+}
+.sync-demo__bubble--b { animation-delay: 1s; }
+.sync-demo__line {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+}
+.sync-demo__dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accent);
+  animation: syncTravel 1.4s ease-in-out infinite;
+}
+.sync-demo__dot:nth-child(2) { animation-delay: 0.2s; }
+.sync-demo__dot:nth-child(3) { animation-delay: 0.4s; }
+
+.ob-google-btn {
+  width: 100%;
+  justify-content: center;
+}
+
+@keyframes syncPulse {
+  0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 var(--accent-soft); }
+  50% { transform: scale(1.06); box-shadow: 0 0 0 8px transparent; }
+}
+@keyframes syncTravel {
+  0%, 100% { opacity: 0.3; transform: translateX(0); }
+  50% { opacity: 1; transform: translateX(3px); }
+}

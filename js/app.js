@@ -19,6 +19,9 @@ import { initSearch }                      from './search.js';
 import { toast }                           from './toasts.js';
 import { initAuth }                        from './auth.js';
 import { initSync, hydrateFromFirestore }  from './sync.js';
+import { initSpaces, setSpaceUser, getUserSpaceId,
+         hydrateFromSpace, renderSpaceChip,
+         showSpaceModal }                  from './spaces.js';
 
 /* ================================================================
    VISTAS
@@ -147,13 +150,30 @@ const initKeyBindings = () => {
    AUTH CALLBACKS
    ================================================================ */
 const onLogin = async (user) => {
-  toast(`Sincronizando datos para ${user.displayName}…`, { type: 'info', duration: 2000 });
-  await hydrateFromFirestore(user.uid);
+  toast(`Bienvenido, ${user.displayName} 👋`, { type: 'info', duration: 2000 });
+
+  // Establece el usuario en el módulo de espacios
+  setSpaceUser(user);
+
+  // ¿Ya tiene un espacio asignado?
+  const spaceId = store.state.meta.spaceId || await getUserSpaceId(user.uid);
+
+  if (spaceId) {
+    // Carga datos del espacio compartido
+    await hydrateFromSpace(spaceId);
+    renderSpaceChip();
+  } else {
+    // Primera vez: sube datos locales a cuenta personal y muestra modal de espacio
+    await hydrateFromFirestore(user.uid);
+    showSpaceModal();
+  }
+
   renderView(currentView);
   renderStats();
 };
 
 const onLogout = async () => {
+  renderSpaceChip();
   renderView(currentView);
 };
 
@@ -185,6 +205,9 @@ const boot = async () => {
   populateCourseSelects();
 
   initOnboarding(() => { store.setOnboarded(true); renderView('dashboard'); });
+
+  // Espacios compartidos (UI — sin usuario todavía)
+  initSpaces();
 
   // Firebase (opera silenciosamente si no está configurado)
   await initSync();

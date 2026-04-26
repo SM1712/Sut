@@ -28,24 +28,33 @@ const initFirestore = async () => {
 };
 
 /* ── Helpers Firestore ───────────────────────────────────────── */
-const userCol = (col) => `users/${_uid}/${col}`;
+
+/**
+ * Devuelve la ruta de colección según si hay un espacio activo.
+ * Con espacio: spaces/{spaceId}/{col}
+ * Sin espacio: users/{uid}/{col}  (fallback personal)
+ */
+const dataPath = (col) => {
+  const sid = store.state.meta?.spaceId;
+  return sid ? `spaces/${sid}/${col}` : `users/${_uid}/${col}`;
+};
 
 const fsSet = async (col, doc) => {
   if (!_db || !_uid) return;
   const { doc: fsDoc, setDoc } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
-  await setDoc(fsDoc(_db, userCol(col), doc.id), doc, { merge: true });
+  await setDoc(fsDoc(_db, dataPath(col), doc.id), doc, { merge: true });
 };
 
 const fsDelete = async (col, id) => {
   if (!_db || !_uid) return;
   const { doc: fsDoc, deleteDoc } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
-  await deleteDoc(fsDoc(_db, userCol(col), id));
+  await deleteDoc(fsDoc(_db, dataPath(col), id));
 };
 
 const fsGetAll = async (col) => {
   if (!_db || !_uid) return [];
   const { collection, getDocs } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
-  const snap = await getDocs(collection(_db, userCol(col)));
+  const snap = await getDocs(collection(_db, dataPath(col)));
   return snap.docs.map(d => d.data());
 };
 
