@@ -84,6 +84,19 @@ class Store extends EventTarget {
     this._save();
   }
 
+  /**
+   * Cierra sesión local: limpia identidad y vínculo con espacio compartido,
+   * y borra los datos colaborativos (que pertenecen al espacio, no al equipo
+   * local). Los settings de personalización se preservan.
+   */
+  clearSessionAndSpace() {
+    this.state = {
+      ...structuredClone(DEFAULT_STATE),
+      meta: { ...DEFAULT_STATE.meta, createdAt: this.state.meta.createdAt, onboarded: this.state.meta.onboarded },
+    };
+    this._save();
+  }
+
   /* ─── Onboarding ─────────────────────────────────────────────── */
   setOnboarded(done = true) {
     this.state.meta.onboarded = !!done;

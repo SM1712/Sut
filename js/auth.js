@@ -5,6 +5,7 @@
 
 import { FIREBASE_ENABLED, firebaseConfig } from './firebase-config.js';
 import { store } from './store.js';
+import { setSyncUid } from './sync.js';
 import { $, escapeHTML } from './utils.js';
 import { toast } from './toasts.js';
 
@@ -70,8 +71,10 @@ export const logout = async () => {
   try {
     const { signOut } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js');
     await signOut(_auth);
-    store.state.meta.uid   = null;
-    store.state.meta.email = null;
+    // Limpia identidad y desconecta del espacio compartido — sin esto, el sync
+    // hook seguiría escribiendo a spaces/{id}/... después de cerrar sesión.
+    setSyncUid(null);
+    store.clearSessionAndSpace();
     renderUserBadge(null);
     toast('Sesión cerrada', { type: 'info' });
   } catch (err) {

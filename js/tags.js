@@ -7,6 +7,7 @@
 import { store } from './store.js';
 import { $, $$, escapeHTML } from './utils.js';
 import { toast } from './toasts.js';
+import { confirmDialog } from './confirm.js';
 
 const COLORS = ['#4F6BFF','#22C55E','#EAB308','#F59E0B','#EF4444','#EC4899','#8B5CF6','#06B6D4','#0EA5E9','#10B981','#F97316','#0F172A'];
 
@@ -27,6 +28,16 @@ const colorPickerEl = $('#tag-color-picker');
 let editingId = null;
 
 const getById = (id) => store.state.tags.find(t => t.id === id);
+
+const renderCatPicker = (selected = 'general') => {
+  const wrap = $('#tag-cat-picker');
+  if (!wrap) return;
+  const hidden = form.querySelector('input[name="category"]');
+  $$('.cat-opt', wrap).forEach(opt => {
+    opt.classList.toggle('is-selected', opt.dataset.cat === selected);
+  });
+  if (hidden) hidden.value = selected;
+};
 
 const renderColorPicker = (selected) => {
   colorPickerEl.innerHTML = '';
@@ -66,11 +77,11 @@ export const openTagModal = (id = null) => {
     const t = getById(id);
     form.elements.id.value = t.id;
     form.elements.name.value = t.name;
-    form.elements.category.value = t.category || 'general';
+    renderCatPicker(t.category || 'general');
     buildDefaultPrioritySelect(t.defaultPriority || '');
     renderColorPicker(t.color);
   } else {
-    form.elements.category.value = 'general';
+    renderCatPicker('general');
     buildDefaultPrioritySelect('');
     renderColorPicker(COLORS[Math.floor(Math.random() * COLORS.length)]);
   }
@@ -86,8 +97,18 @@ export const renderTags = () => {
   const list = store.state.tags;
   if (!list.length) {
     const tpl = $('#empty-state-template').content.cloneNode(true);
-    tpl.querySelector('.empty__title').textContent = 'Sin etiquetas';
-    tpl.querySelector('.empty__text').textContent = 'Crea etiquetas como "Investigación", "Examen", "Ciclo III"…';
+    tpl.querySelector('.empty__title').textContent = 'Sin etiquetas todavía';
+    tpl.querySelector('.empty__text').textContent = 'Las etiquetas son chips que pegas a las tareas: "Investigación", "Examen", "Ciclo III". Una etiqueta puede sugerir prioridad automáticamente.';
+    tpl.querySelector('.empty__art').innerHTML = `
+      <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M54 36 36 54a4 4 0 0 1-6 0L8 32V8h24l22 22a4 4 0 0 1 0 6z"/>
+        <circle cx="20" cy="20" r="3"/>
+      </svg>`;
+    const cta = document.createElement('button');
+    cta.className = 'btn btn--primary';
+    cta.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg> Crear primera etiqueta`;
+    cta.addEventListener('click', () => openTagModal());
+    tpl.querySelector('.empty__cta').appendChild(cta);
     grid.innerHTML = '';
     grid.appendChild(tpl);
     return;
@@ -155,7 +176,14 @@ export const initTags = () => {
   $('#new-tag-btn')?.addEventListener('click', () => openTagModal());
 
   modal.addEventListener('click', (e) => {
-    if (e.target.matches('[data-close]')) closeModal();
+    if (e.target.closest('[data-close]')) closeModal();
+  });
+
+  // Category picker (tarjetas con descripción)
+  $('#tag-cat-picker')?.addEventListener('click', (e) => {
+    const opt = e.target.closest('.cat-opt');
+    if (!opt) return;
+    renderCatPicker(opt.dataset.cat);
   });
 
   form.addEventListener('submit', (e) => {
@@ -174,12 +202,20 @@ export const initTags = () => {
     closeModal();
   });
 
-  $('#delete-tag').addEventListener('click', () => {
+  $('#delete-tag').addEventListener('click', async () => {
     if (!editingId) return;
-    if (confirm('¿Eliminar esta etiqueta?')) {
-      store.deleteTag(editingId);
-      toast('Etiqueta eliminada', { type: 'warn' });
-      closeModal();
-    }
+    const tag = getById(editingId);
+    const usage = store.state.tasks.filter(t => (t.tagIds || []).includes(editingId)).length;
+    const ok = await confirmDialog({
+      title: `¿Eliminar "${tag?.name || 'esta etiqueta'}"?`,
+      text: usage
+        ? `Está asignada a ${usage} tarea${usage > 1 ? 's' : ''}; la quitaremos de ellas pero las tareas no se borran.`
+        : 'La etiqueta se eliminará permanentemente.',
+      confirmText: 'Sí, eliminar',
+    });
+    if (!ok) return;
+    store.deleteTag(editingId);
+    toast('Etiqueta eliminada', { type: 'warn' });
+    closeModal();
   });
 };

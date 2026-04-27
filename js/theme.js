@@ -187,9 +187,9 @@ export const initTheme = () => {
     buildSwatches($('#text-picker'), TEXT_COLORS, 'textColor', store.settings.textColor);
   });
 
-  // Cierre del drawer
+  // Cierre del drawer (closest para que clicks en el SVG/path interno también cierren)
   drawer?.addEventListener('click', (e) => {
-    if (e.target.matches('[data-close]')) closeSettings();
+    if (e.target.closest('[data-close]')) closeSettings();
   });
 
   // Atajos

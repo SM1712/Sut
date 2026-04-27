@@ -22,6 +22,7 @@ import { initSync, hydrateFromFirestore, setSyncUid }  from './sync.js';
 import { initSpaces, setSpaceUser, getUserSpaceId,
          hydrateFromSpace, renderSpaceChip,
          showSpaceModal }                  from './spaces.js';
+import { confirmDialog }                   from './confirm.js';
 
 /* ================================================================
    VISTAS
@@ -122,13 +123,18 @@ const initDataActions = () => {
     e.target.value = '';
   });
 
-  $('#reset-data')?.addEventListener('click', () => {
-    if (confirm('¿Eliminar TODOS tus datos? Esta acción no se puede deshacer.')) {
-      store.reset();
-      applyAllSettings();
-      renderView(currentView);
-      toast('Datos restablecidos', { type: 'warn' });
-    }
+  $('#reset-data')?.addEventListener('click', async () => {
+    const ok = await confirmDialog({
+      title: '¿Restablecer todo?',
+      text: 'Se eliminarán TODOS tus datos: tareas, cursos, etiquetas, eventos y personalización. Esta acción no se puede deshacer. Si tienes datos importantes, exporta primero.',
+      confirmText: 'Sí, borrar todo',
+      icon: 'warn',
+    });
+    if (!ok) return;
+    store.reset();
+    applyAllSettings();
+    renderView(currentView);
+    toast('Datos restablecidos', { type: 'warn' });
   });
 
   $('#replay-onboarding')?.addEventListener('click', () => { closeSettings(); setTimeout(showOnboarding, 200); });
@@ -183,6 +189,7 @@ const onLogin = async (user) => {
 
 const onLogout = async () => {
   renderSpaceChip();
+  renderStats();
   renderView(currentView);
 };
 

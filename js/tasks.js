@@ -9,6 +9,7 @@ import { $, $$, escapeHTML, parseDue, relativeDue, fmtTime,
          computeEffectivePriority, escaladeLabel } from './utils.js';
 import { toast } from './toasts.js';
 import { renderTagPicker, getPickerSelection } from './tags.js';
+import { confirmDialog } from './confirm.js';
 
 const PRIORITY_ORDER  = { urgent: 0, high: 1, medium: 2, low: 3 };
 const PRIORITY_LABELS = { urgent: 'Urgente', high: 'Alta', medium: 'Media', low: 'Baja' };
@@ -122,10 +123,23 @@ const renderTaskCard = (t) => {
   return card;
 };
 
-const renderEmpty = (host, title, text) => {
+const renderEmpty = (host, title, text, withCta = true) => {
   const tpl = $('#empty-state-template').content.cloneNode(true);
   if (title) tpl.querySelector('.empty__title').textContent = title;
   if (text)  tpl.querySelector('.empty__text').textContent  = text;
+  // Arte de tareas: checklist
+  tpl.querySelector('.empty__art').innerHTML = `
+    <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M22 30l5 5 14-14"/>
+      <path d="M52 32v18a4 4 0 0 1-4 4H16a4 4 0 0 1-4-4V18a4 4 0 0 1 4-4h22"/>
+    </svg>`;
+  if (withCta) {
+    const cta = document.createElement('button');
+    cta.className = 'btn btn--primary';
+    cta.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg> Nueva tarea`;
+    cta.addEventListener('click', () => openTaskModal());
+    tpl.querySelector('.empty__cta').appendChild(cta);
+  }
   host.appendChild(tpl);
 };
 
@@ -258,7 +272,7 @@ export const initTasks = () => {
   $('#new-task-btn')?.addEventListener('click', () => openTaskModal());
 
   modal.addEventListener('click', (e) => {
-    if (e.target.matches('[data-close]')) closeModal();
+    if (e.target.closest('[data-close]')) closeModal();
   });
 
   form.addEventListener('submit', (e) => {
@@ -283,13 +297,18 @@ export const initTasks = () => {
     closeModal();
   });
 
-  $('#delete-task').addEventListener('click', () => {
+  $('#delete-task').addEventListener('click', async () => {
     if (!editingId) return;
-    if (confirm('¿Eliminar esta tarea?')) {
-      store.deleteTask(editingId);
-      toast('Tarea eliminada', { type: 'warn' });
-      closeModal();
-    }
+    const t = store.state.tasks.find(x => x.id === editingId);
+    const ok = await confirmDialog({
+      title: `¿Eliminar "${t?.title || 'esta tarea'}"?`,
+      text: 'La tarea se eliminará permanentemente. Esta acción no se puede deshacer.',
+      confirmText: 'Sí, eliminar',
+    });
+    if (!ok) return;
+    store.deleteTask(editingId);
+    toast('Tarea eliminada', { type: 'warn' });
+    closeModal();
   });
 
   // Filtros del dashboard (chips)

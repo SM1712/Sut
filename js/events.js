@@ -6,6 +6,7 @@
 import { store } from './store.js';
 import { $, $$, escapeHTML } from './utils.js';
 import { toast } from './toasts.js';
+import { confirmDialog } from './confirm.js';
 
 /* ── Tipos de evento ──────────────────────────────────────────── */
 const EVT_ICON = (path) =>
@@ -148,7 +149,7 @@ export const initEvents = () => {
   $('#new-event-btn')?.addEventListener('click', () => openEventModal());
 
   modal?.addEventListener('click', (e) => {
-    if (e.target.matches('[data-close]')) closeModal();
+    if (e.target.closest('[data-close]')) closeModal();
   });
 
   form?.addEventListener('submit', (e) => {
@@ -172,12 +173,17 @@ export const initEvents = () => {
     closeModal();
   });
 
-  $('#delete-event')?.addEventListener('click', () => {
+  $('#delete-event')?.addEventListener('click', async () => {
     if (!editingId) return;
-    if (confirm('¿Eliminar este evento?')) {
-      store.deleteEvent(editingId);
-      toast('Evento eliminado', { type: 'warn' });
-      closeModal();
-    }
+    const ev = store.state.events.find(e => e.id === editingId);
+    const ok = await confirmDialog({
+      title: `¿Eliminar "${ev?.title || 'este evento'}"?`,
+      text: 'El evento se eliminará permanentemente del calendario.',
+      confirmText: 'Sí, eliminar',
+    });
+    if (!ok) return;
+    store.deleteEvent(editingId);
+    toast('Evento eliminado', { type: 'warn' });
+    closeModal();
   });
 };

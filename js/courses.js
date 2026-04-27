@@ -5,6 +5,7 @@
 import { store } from './store.js';
 import { $, $$, escapeHTML } from './utils.js';
 import { toast } from './toasts.js';
+import { confirmDialog } from './confirm.js';
 
 const COLORS = ['#4F6BFF', '#22C55E', '#EAB308', '#F59E0B', '#EF4444', '#EC4899', '#8B5CF6', '#06B6D4', '#0EA5E9', '#10B981', '#F97316', '#0F172A'];
 
@@ -64,7 +65,18 @@ export const renderCourses = () => {
   if (!list.length) {
     const tpl = $('#empty-state-template').content.cloneNode(true);
     tpl.querySelector('.empty__title').textContent = 'No tienes cursos aún';
-    tpl.querySelector('.empty__text').textContent = 'Crea uno para empezar a organizar tus tareas por curso.';
+    tpl.querySelector('.empty__text').textContent = 'Crea uno para empezar a organizar tus tareas por curso. Cada curso tiene su color y aparece en el dashboard.';
+    tpl.querySelector('.empty__art').innerHTML = `
+      <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M14 50V14a4 4 0 0 1 4-4h32v44H18a4 4 0 0 1-4-4z"/>
+        <path d="M50 50H18a4 4 0 0 0 0 8h32"/>
+        <path d="M26 22h16"/>
+      </svg>`;
+    const cta = document.createElement('button');
+    cta.className = 'btn btn--primary';
+    cta.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg> Crear primer curso`;
+    cta.addEventListener('click', () => openCourseModal());
+    tpl.querySelector('.empty__cta').appendChild(cta);
     grid.innerHTML = '';
     grid.appendChild(tpl);
     return;
@@ -139,7 +151,7 @@ export const initCourses = () => {
   $('#new-course-btn')?.addEventListener('click', () => openCourseModal());
 
   modal.addEventListener('click', (e) => {
-    if (e.target.matches('[data-close]')) closeModal();
+    if (e.target.closest('[data-close]')) closeModal();
   });
 
   form.addEventListener('submit', (e) => {
@@ -156,14 +168,26 @@ export const initCourses = () => {
     });
     toast(data.id ? 'Curso actualizado' : 'Curso creado', { type: 'success' });
     closeModal();
+    // Render directo como red de seguridad (además del listener reactivo).
+    renderCourses();
+    renderCoursePills();
+    populateCourseSelects();
   });
 
-  $('#delete-course').addEventListener('click', () => {
+  $('#delete-course').addEventListener('click', async () => {
     if (!editingId) return;
-    if (confirm('¿Eliminar este curso? Las tareas no se borran, solo quedarán sin curso.')) {
-      store.deleteCourse(editingId);
-      toast('Curso eliminado', { type: 'warn' });
-      closeModal();
-    }
+    const c = getById(editingId);
+    const ok = await confirmDialog({
+      title: `¿Eliminar "${c?.name || 'este curso'}"?`,
+      text: 'Las tareas asociadas no se borran, solo quedarán sin curso. Esta acción no se puede deshacer.',
+      confirmText: 'Sí, eliminar',
+    });
+    if (!ok) return;
+    store.deleteCourse(editingId);
+    toast('Curso eliminado', { type: 'warn' });
+    closeModal();
+    renderCourses();
+    renderCoursePills();
+    populateCourseSelects();
   });
 };

@@ -160,6 +160,19 @@ export const hydrateFromSpace = async (spaceId) => {
 
   const spaceName = infoSnap.exists() ? infoSnap.data().name : 'Mi Espacio';
   store.setSpaceId(spaceId, spaceName);
+
+  // Si remoto está completamente vacío pero local tiene datos, NO pisamos:
+  // el sync hook irá subiendo los cambios locales al espacio. Esto evita que
+  // un reload tras crear un espacio borre todo lo local por race de Firestore.
+  const remoteEmpty = !tasks.length && !courses.length && !tags.length && !events.length;
+  const localHas    = (store.state.tasks.length || store.state.courses.length ||
+                       store.state.tags.length  || store.state.events.length);
+  if (remoteEmpty && localHas) {
+    // Sube lo local al espacio para sembrarlo
+    await _uploadLocalToSpace(spaceId, db);
+    return;
+  }
+
   store.hydrateFromRemote({
     ...store.state,
     tasks, courses, tags, events,
