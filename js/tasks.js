@@ -221,13 +221,13 @@ export const openTaskModal = (id = null) => {
 
   if (id) {
     const t = store.state.tasks.find(x => x.id === id);
-    form.id.value          = t.id;
-    form.title.value       = t.title;
-    form.description.value = t.description || '';
-    form.courseId.value    = t.courseId || '';
-    form.dueDate.value     = t.dueDate  || '';
-    form.dueTime.value     = t.dueTime  || '';
-    form.reminder.value    = t.reminder || '';
+    form.elements.id.value          = t.id;
+    form.elements.title.value       = t.title;
+    form.elements.description.value = t.description || '';
+    form.elements.courseId.value    = t.courseId || '';
+    form.elements.dueDate.value     = t.dueDate  || '';
+    form.elements.dueTime.value     = t.dueTime  || '';
+    form.elements.reminder.value    = t.reminder || '';
     const pRadio = form.querySelector(`input[name="priority"][value="${t.priority||'medium'}"]`);
     if (pRadio) pRadio.checked = true;
     // Escalante
@@ -243,7 +243,7 @@ export const openTaskModal = (id = null) => {
   }
 
   modal.hidden = false;
-  setTimeout(() => form.title.focus(), 80);
+  setTimeout(() => form.elements.title.focus(), 80);
 };
 
 const closeModal = () => { modal.hidden = true; editingId = null; };

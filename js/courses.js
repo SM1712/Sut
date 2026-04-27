@@ -42,16 +42,16 @@ export const openCourseModal = (id = null) => {
   $('#delete-course').hidden = !id;
   if (id) {
     const c = getById(id);
-    form.id.value = c.id;
-    form.name.value = c.name;
-    form.code.value = c.code || '';
-    form.teacher.value = c.teacher || '';
+    form.elements.id.value = c.id;
+    form.elements.name.value = c.name;
+    form.elements.code.value = c.code || '';
+    form.elements.teacher.value = c.teacher || '';
     renderColorPicker(c.color);
   } else {
     renderColorPicker(COLORS[Math.floor(Math.random() * COLORS.length)]);
   }
   modal.hidden = false;
-  setTimeout(() => form.name.focus(), 60);
+  setTimeout(() => form.elements.name.focus(), 60);
 };
 
 const closeModal = () => { modal.hidden = true; editingId = null; };

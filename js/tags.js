@@ -64,18 +64,18 @@ export const openTagModal = (id = null) => {
   $('#delete-tag').hidden = !id;
   if (id) {
     const t = getById(id);
-    form.id.value = t.id;
-    form.name.value = t.name;
-    form.category.value = t.category || 'general';
+    form.elements.id.value = t.id;
+    form.elements.name.value = t.name;
+    form.elements.category.value = t.category || 'general';
     buildDefaultPrioritySelect(t.defaultPriority || '');
     renderColorPicker(t.color);
   } else {
-    form.category.value = 'general';
+    form.elements.category.value = 'general';
     buildDefaultPrioritySelect('');
     renderColorPicker(COLORS[Math.floor(Math.random() * COLORS.length)]);
   }
   modal.hidden = false;
-  setTimeout(() => form.name.focus(), 60);
+  setTimeout(() => form.elements.name.focus(), 60);
 };
 
 const closeModal = () => { modal.hidden = true; editingId = null; };

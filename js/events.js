@@ -73,17 +73,17 @@ export const openEventModal = (id = null, prefillDate = null) => {
 
   if (id) {
     const ev = store.state.events.find(e => e.id === id);
-    form.id.value          = ev.id;
-    form.title.value       = ev.title;
-    form.description.value = ev.description || '';
-    form.startDate.value   = ev.startDate;
-    form.endDate.value     = ev.endDate || ev.startDate;
+    form.elements.id.value          = ev.id;
+    form.elements.title.value       = ev.title;
+    form.elements.description.value = ev.description || '';
+    form.elements.startDate.value   = ev.startDate;
+    form.elements.endDate.value     = ev.endDate || ev.startDate;
     buildTypeOptions(ev.type);
     buildColorPicker(ev.color);
   } else {
     const today = prefillDate || new Date().toISOString().slice(0, 10);
-    form.startDate.value = today;
-    form.endDate.value   = today;
+    form.elements.startDate.value = today;
+    form.elements.endDate.value   = today;
     buildTypeOptions('exam');
     buildColorPicker(EVENT_TYPES['exam'].color);
   }
