@@ -18,7 +18,7 @@ import { initNotifications }               from './notifications.js';
 import { initSearch }                      from './search.js';
 import { toast }                           from './toasts.js';
 import { initAuth }                        from './auth.js';
-import { initSync, hydrateFromFirestore }  from './sync.js';
+import { initSync, hydrateFromFirestore, setSyncUid }  from './sync.js';
 import { initSpaces, setSpaceUser, getUserSpaceId,
          hydrateFromSpace, renderSpaceChip,
          showSpaceModal }                  from './spaces.js';
@@ -152,8 +152,9 @@ const initKeyBindings = () => {
 const onLogin = async (user) => {
   toast(`Bienvenido, ${user.displayName} 👋`, { type: 'info', duration: 2000 });
 
-  // Establece el usuario en el módulo de espacios
+  // Establece el usuario en el módulo de espacios y en sync
   setSpaceUser(user);
+  setSyncUid(user.uid);
 
   // ¿Ya tiene un espacio asignado?
   const spaceId = store.state.meta.spaceId || await getUserSpaceId(user.uid);

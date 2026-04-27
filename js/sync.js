@@ -11,6 +11,8 @@ import { store } from './store.js';
 let _db  = null;
 let _uid = null;
 
+export const setSyncUid = (uid) => { _uid = uid; };
+
 /* ── Inicialización lazy ─────────────────────────────────────── */
 const initFirestore = async () => {
   if (!FIREBASE_ENABLED || firebaseConfig.apiKey === 'TU_API_KEY') return null;
