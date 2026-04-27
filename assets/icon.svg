@@ -1,18 +1,37 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
   <defs>
-    <linearGradient id="sut-grad" x1="0" y1="0" x2="64" y2="64" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#4F6BFF"/>
-      <stop offset="100%" stop-color="#6E5BFF"/>
+    <linearGradient id="bg" x1="0" y1="0" x2="64" y2="64" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#1e1b4b"/>
+      <stop offset="55%" stop-color="#3730a3"/>
+      <stop offset="100%" stop-color="#4f46e5"/>
     </linearGradient>
-    <linearGradient id="sut-shine" x1="0" y1="0" x2="0" y2="64" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.18"/>
-      <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
+    <linearGradient id="check-g" x1="12" y1="20" x2="52" y2="50" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#a5b4fc"/>
+      <stop offset="100%" stop-color="#c4b5fd"/>
     </linearGradient>
+    <filter id="glow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="3" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
   </defs>
-  <rect x="2" y="2" width="60" height="60" rx="16" fill="url(#sut-grad)"/>
-  <rect x="2" y="2" width="60" height="60" rx="16" fill="url(#sut-shine)"/>
-  <path d="M18 22h28" stroke="#ffffff" stroke-width="3.2" stroke-linecap="round" opacity="0.55"/>
-  <path d="M18 32h20" stroke="#ffffff" stroke-width="3.2" stroke-linecap="round" opacity="0.85"/>
-  <path d="M18 42h14" stroke="#ffffff" stroke-width="3.2" stroke-linecap="round" opacity="0.4"/>
-  <path d="M40 40.5l4.2 4.5L52 36.5" stroke="#ffffff" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- Fondo con esquinas redondeadas -->
+  <rect width="64" height="64" rx="16" fill="url(#bg)"/>
+
+  <!-- Brillo sutil superior -->
+  <rect x="0" y="0" width="64" height="30" rx="16" fill="white" fill-opacity="0.07"/>
+
+  <!-- Líneas de tarea (decorativas, fondo) -->
+  <rect x="11" y="18" width="32" height="4" rx="2" fill="white" fill-opacity="0.08"/>
+  <rect x="11" y="26" width="22" height="4" rx="2" fill="white" fill-opacity="0.06"/>
+
+  <!-- Check principal con glow -->
+  <path filter="url(#glow)"
+        d="M13 35 L25 47 L51 21"
+        stroke="url(#check-g)" stroke-width="6.5"
+        stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- Punto de acento en la punta del check -->
+  <circle cx="51" cy="21" r="5" fill="#818cf8" fill-opacity="0.6"/>
+  <circle cx="51" cy="21" r="2.5" fill="white"/>
 </svg>

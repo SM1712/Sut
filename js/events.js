@@ -8,14 +8,17 @@ import { $, $$, escapeHTML } from './utils.js';
 import { toast } from './toasts.js';
 
 /* ── Tipos de evento ──────────────────────────────────────────── */
+const EVT_ICON = (path) =>
+  `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="13" height="13">${path}</svg>`;
+
 export const EVENT_TYPES = {
-  exam:         { label: 'Exámenes',      icon: '📝', color: '#EF4444' },
-  presentation: { label: 'Exposiciones',  icon: '🎤', color: '#F59E0B' },
-  project:      { label: 'Entrega',       icon: '📦', color: '#8B5CF6' },
-  break:        { label: 'Descanso',      icon: '🏖',  color: '#22C55E' },
-  holiday:      { label: 'Feriado',       icon: '🎉', color: '#0EA5E9' },
-  meeting:      { label: 'Reunión',       icon: '🤝', color: '#EC4899' },
-  custom:       { label: 'Personalizado', icon: '⭐', color: '#6E5BFF' },
+  exam:         { label: 'Exámenes',      icon: EVT_ICON('<path d="M4 2h8a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1z"/><path d="M6 6h4M6 9h2"/>'), color: '#EF4444' },
+  presentation: { label: 'Exposiciones',  icon: EVT_ICON('<rect x="2" y="2" width="12" height="8" rx="1"/><path d="M8 10v4M5 14h6"/>'), color: '#F59E0B' },
+  project:      { label: 'Entrega',       icon: EVT_ICON('<path d="M12 2H4a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V3a1 1 0 0 0-1-1z"/><path d="M5 6l2 2 4-4"/>'), color: '#8B5CF6' },
+  break:        { label: 'Descanso',      icon: EVT_ICON('<circle cx="8" cy="8" r="6"/><path d="M8 5v3l2 2"/>'), color: '#22C55E' },
+  holiday:      { label: 'Feriado',       icon: EVT_ICON('<path d="M8 2v2M8 12v2M2 8h2M12 8h2M4.2 4.2l1.4 1.4M10.4 10.4l1.4 1.4M4.2 11.8l1.4-1.4M10.4 5.6l1.4-1.4"/><circle cx="8" cy="8" r="2.5"/>'), color: '#0EA5E9' },
+  meeting:      { label: 'Reunión',       icon: EVT_ICON('<circle cx="5" cy="5" r="2"/><circle cx="11" cy="5" r="2"/><path d="M1 13c0-2.2 1.8-4 4-4M9 13c0-2.2 1.8-4 4-4"/>'), color: '#EC4899' },
+  custom:       { label: 'Personalizado', icon: EVT_ICON('<polygon points="8,1 10,6 15,6 11,9 13,14 8,11 3,14 5,9 1,6 6,6"/>'), color: '#6E5BFF' },
 };
 
 const COLORS = [
@@ -53,7 +56,7 @@ const buildTypeOptions = (selected = 'exam') => {
   sel.innerHTML = '';
   Object.entries(EVENT_TYPES).forEach(([k, v]) => {
     const o = document.createElement('option');
-    o.value = k; o.textContent = `${v.icon} ${v.label}`;
+    o.value = k; o.textContent = v.label;
     if (k === selected) o.selected = true;
     sel.appendChild(o);
   });
@@ -129,8 +132,8 @@ export const renderEventStrip = (isoDate, onClick) => {
       isEnd   ? 'is-end'   : '',
     ].join(' ');
     strip.style.setProperty('--ev-color', ev.color || type.color);
-    strip.title = `${type.icon} ${ev.title}`;
-    if (isStart) strip.textContent = `${type.icon} ${ev.title}`;
+    strip.title = ev.title;
+    if (isStart) strip.innerHTML = `${type.icon}<span class="cal-event-strip__label">${escapeHTML(ev.title)}</span>`;
     strip.addEventListener('click', (e) => {
       e.stopPropagation();
       onClick?.(ev.id);

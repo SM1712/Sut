@@ -31,11 +31,15 @@ let currentView = 'dashboard';
 const showView = (name) => {
   $$('.view').forEach(v => v.classList.remove('is-active'));
   $$('.nav-item').forEach(n => n.classList.remove('is-active'));
+  $$('.bottom-nav__item').forEach(n => n.classList.remove('is-active'));
 
-  const view = $(`.view--${name}`);
-  const nav  = $(`.nav-item[data-view="${name}"]`);
-  if (view) view.classList.add('is-active');
-  if (nav)  nav.classList.add('is-active');
+  const view       = $(`.view--${name}`);
+  const nav        = $(`.nav-item[data-view="${name}"]`);
+  const bottomItem = $(`.bottom-nav__item[data-view="${name}"]`);
+
+  if (view)       view.classList.add('is-active');
+  if (nav)        nav.classList.add('is-active');
+  if (bottomItem) bottomItem.classList.add('is-active');
 
   currentView = name;
   renderView(name);
@@ -59,7 +63,11 @@ const initNav = () => {
     btn.addEventListener('click', () => showView(btn.dataset.view));
   });
   $('#sidebar-toggle')?.addEventListener('click', () => {
-    $('#app').classList.toggle('is-sidebar-open');
+    if (window.innerWidth <= 880) {
+      $('#app').classList.toggle('is-sidebar-open');
+    } else {
+      $('#app').classList.toggle('is-sidebar-collapsed');
+    }
   });
   document.addEventListener('click', (e) => {
     if (window.innerWidth <= 880 && !e.target.closest('.sidebar') && !e.target.closest('#sidebar-toggle')) {
@@ -150,7 +158,7 @@ const initKeyBindings = () => {
    AUTH CALLBACKS
    ================================================================ */
 const onLogin = async (user) => {
-  toast(`Bienvenido, ${user.displayName} 👋`, { type: 'info', duration: 2000 });
+  toast(`Bienvenido, ${user.displayName}`, { type: 'success', duration: 2000 });
 
   // Establece el usuario en el módulo de espacios y en sync
   setSpaceUser(user);
@@ -201,6 +209,13 @@ const boot = async () => {
   bindStoreReactions();
 
   $('#new-task-btn-tasks')?.addEventListener('click', () => openTaskModal());
+  $('#new-task-btn')?.addEventListener('click',      () => openTaskModal());
+  $('#bottom-new-task')?.addEventListener('click',   () => openTaskModal());
+
+  // Bottom nav (mobile)
+  $$('.bottom-nav__item[data-view]').forEach(btn => {
+    btn.addEventListener('click', () => showView(btn.dataset.view));
+  });
 
   store.seedSampleIfEmpty();
   populateCourseSelects();
@@ -232,4 +247,23 @@ if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', boot);
 } else {
   boot();
+}
+
+/* ── Service Worker (PWA) ────────────────────────────────────── */
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js')
+      .then(reg => {
+        // Auto-actualización silenciosa
+        reg.addEventListener('updatefound', () => {
+          const newWorker = reg.installing;
+          newWorker?.addEventListener('statechange', () => {
+            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+              newWorker.postMessage({ type: 'SKIP_WAITING' });
+            }
+          });
+        });
+      })
+      .catch(err => console.warn('[SUT] SW no registrado:', err));
+  });
 }

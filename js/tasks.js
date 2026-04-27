@@ -12,7 +12,12 @@ import { renderTagPicker, getPickerSelection } from './tags.js';
 
 const PRIORITY_ORDER  = { urgent: 0, high: 1, medium: 2, low: 3 };
 const PRIORITY_LABELS = { urgent: 'Urgente', high: 'Alta', medium: 'Media', low: 'Baja' };
-const PRIORITY_ICONS  = { urgent: '⚡', high: '🔴', medium: '🟡', low: '🟢' };
+const PRIORITY_SVG = {
+  urgent: `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="12" height="12"><path d="M8 1v8M5 6l3 3 3-3"/><path d="M3 13h10"/></svg>`,
+  high:   `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="12" height="12"><path d="M8 12V4M5 7l3-3 3 3"/></svg>`,
+  medium: `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="12" height="12"><path d="M4 8h8"/></svg>`,
+  low:    `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="12" height="12"><path d="M8 4v8M5 9l3 3 3-3"/></svg>`,
+};
 
 const modal = $('#task-modal');
 const form  = $('#task-form');
@@ -78,7 +83,7 @@ const renderTaskCard = (t) => {
   const escalHTML = escalLabel
     ? `<span class="task-card__escalade" title="Prioridad base: ${PRIORITY_LABELS[t.priority||'medium']}">${escalLabel}</span>` : '';
   const creatorHTML = t.createdBy
-    ? `<span class="task-card__creator" title="Creado por ${t.createdBy}">👤 ${t.createdBy.split('@')[0]}</span>` : '';
+    ? `<span class="task-card__creator" title="Creado por ${t.createdBy}"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" width="11" height="11"><circle cx="8" cy="5" r="3"/><path d="M2 14c0-3.3 2.7-6 6-6s6 2.7 6 6"/></svg> ${t.createdBy.split('@')[0]}</span>` : '';
 
   card.innerHTML = `
     <span class="task-card__bar prio-${effPrio}"></span>

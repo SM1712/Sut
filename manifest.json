@@ -1,0 +1,37 @@
+{
+  "name": "SUT — Sistema Universal de Tareas",
+  "short_name": "SUT",
+  "description": "Organiza tus tareas universitarias por curso, prioridad y fecha. Sincronización en equipo con Firebase.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#1e1b4b",
+  "theme_color": "#4f46e5",
+  "orientation": "any",
+  "lang": "es",
+  "categories": ["education", "productivity"],
+  "icons": [
+    {
+      "src": "assets/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "assets/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ],
+  "screenshots": [],
+  "shortcuts": [
+    {
+      "name": "Nueva tarea",
+      "short_name": "Nueva",
+      "description": "Crear una nueva tarea rápidamente",
+      "url": "/?action=new-task",
+      "icons": [{ "src": "assets/icon.svg", "sizes": "any" }]
+    }
+  ]
+}

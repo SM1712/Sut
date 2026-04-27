@@ -236,8 +236,8 @@ export const initSpaces = () => {
       hideSpaceModal();
       renderSpaceChip();
       toast(
-        `Espacio "${name}" creado ✅ — Código: <strong>${code}</strong>`,
-        { type: 'success', duration: 8000 }
+        `Espacio creado. Comparte el código: <strong style="font-family:monospace;letter-spacing:.12em">${code}</strong>`,
+        { type: 'success', duration: 8000, html: true }
       );
     } catch (err) {
       toast('Error: ' + err.message, { type: 'danger' });

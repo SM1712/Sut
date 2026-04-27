@@ -7,6 +7,12 @@
   display: grid;
   grid-template-columns: var(--sidebar-w) 1fr;
   min-height: 100vh;
+  transition: grid-template-columns var(--dur) var(--ease-out);
+}
+
+/* Sidebar colapsado en desktop */
+.app.is-sidebar-collapsed {
+  grid-template-columns: 68px 1fr;
 }
 
 @media (max-width: 880px) {
@@ -25,9 +31,42 @@
   top: 0;
   height: 100vh;
   z-index: var(--z-sidebar);
-  transition: transform var(--dur) var(--ease-out);
+  transition: transform var(--dur) var(--ease-out), width var(--dur) var(--ease-out), padding var(--dur) var(--ease-out);
+  overflow: hidden;
 }
 
+/* Sidebar colapsado (desktop) */
+.app.is-sidebar-collapsed .sidebar {
+  width: 68px;
+  padding-left: var(--space-3);
+  padding-right: var(--space-3);
+}
+.app.is-sidebar-collapsed .brand-text,
+.app.is-sidebar-collapsed .nav-item > span:not(.nav-item__badge),
+.app.is-sidebar-collapsed .sidebar__footer .btn:not(.icon-btn),
+.app.is-sidebar-collapsed .space-chip__info,
+.app.is-sidebar-collapsed .user-name,
+.app.is-sidebar-collapsed .user-badge span {
+  display: none;
+}
+.app.is-sidebar-collapsed .nav-item {
+  justify-content: center;
+  padding-left: 0;
+  padding-right: 0;
+}
+.app.is-sidebar-collapsed .nav-item.is-active::before { display: none; }
+.app.is-sidebar-collapsed .space-chip {
+  justify-content: center;
+  padding: var(--space-2);
+}
+.app.is-sidebar-collapsed .sidebar__footer {
+  align-items: center;
+}
+.app.is-sidebar-collapsed .user-badge {
+  justify-content: center;
+}
+
+/* Mobile overlay sidebar */
 @media (max-width: 880px) {
   .sidebar {
     position: fixed;
@@ -37,6 +76,18 @@
     box-shadow: var(--shadow-3);
   }
   .app.is-sidebar-open .sidebar { transform: translateX(0); }
+
+  /* Overlay backdrop when sidebar is open */
+  .app.is-sidebar-open::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: var(--backdrop);
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
+    z-index: calc(var(--z-sidebar) - 1);
+    animation: fadeIn var(--dur) var(--ease-out);
+  }
 }
 
 .sidebar__brand {
@@ -836,13 +887,17 @@ textarea.input { resize: vertical; min-height: 60px; }
   display: grid;
   place-items: center;
   padding: var(--space-4);
+  /* Blur persistente en el modal completo */
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
 }
 .modal__backdrop {
   position: absolute;
   inset: 0;
   background: var(--backdrop);
-  backdrop-filter: blur(4px);
-  animation: fadeIn var(--dur) var(--ease-out);
+  /* will-change asegura que el blur no se pierda después de la animación */
+  will-change: opacity;
+  animation: fadeIn var(--dur) var(--ease-out) both;
 }
 .modal__panel {
   position: relative;
@@ -850,12 +905,27 @@ textarea.input { resize: vertical; min-height: 60px; }
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   width: min(620px, 100%);
-  max-height: calc(100vh - 32px);
+  max-height: calc(100dvh - 32px);
   overflow: auto;
   box-shadow: var(--shadow-3);
-  animation: panelIn var(--dur-slow) var(--ease-spring);
+  animation: panelIn var(--dur-slow) var(--ease-spring) both;
 }
 .modal__panel--sm { width: min(480px, 100%); }
+
+/* Mobile: bottom sheet */
+@media (max-width: 600px) {
+  .modal {
+    padding: 0;
+    align-items: flex-end;
+  }
+  .modal__panel {
+    width: 100%;
+    max-height: 94dvh;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    animation: sheetIn var(--dur-slow) var(--ease-spring) both;
+  }
+  .modal__panel--sm { width: 100%; }
+}
 
 .modal__header {
   display: flex;
@@ -891,7 +961,10 @@ textarea.input { resize: vertical; min-height: 60px; }
   position: absolute;
   inset: 0;
   background: var(--backdrop);
-  animation: fadeIn var(--dur) var(--ease-out);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  will-change: opacity;
+  animation: fadeIn var(--dur) var(--ease-out) both;
 }
 .drawer__panel {
   position: absolute;
@@ -1676,4 +1749,173 @@ input[type="range"]::-moz-range-thumb {
 @keyframes syncTravel {
   0%, 100% { opacity: 0.3; transform: translateX(0); }
   50% { opacity: 1; transform: translateX(3px); }
+}
+
+/* ====================== BOTTOM NAV (mobile) ====================== */
+.bottom-nav {
+  display: none; /* visible solo en mobile */
+}
+
+@media (max-width: 880px) {
+  /* Main area: dejar espacio al bottom nav */
+  .main {
+    padding-bottom: calc(68px + env(safe-area-inset-bottom));
+  }
+
+  /* Bottom nav */
+  .bottom-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: calc(64px + env(safe-area-inset-bottom));
+    padding-bottom: env(safe-area-inset-bottom);
+    background: color-mix(in srgb, var(--bg-elevated) 92%, transparent);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-top: 1px solid var(--border);
+    z-index: var(--z-topbar);
+    box-shadow: 0 -4px 24px -8px rgb(0 0 0 / 12%);
+  }
+  .bottom-nav__item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    padding: 6px 12px;
+    border-radius: var(--radius-sm);
+    color: var(--text-mute);
+    font-size: 0.68rem;
+    font-weight: 500;
+    min-width: 52px;
+    transition: color var(--dur-fast), background var(--dur-fast);
+    flex: 1;
+  }
+  .bottom-nav__item svg { width: 22px; height: 22px; }
+  .bottom-nav__item.is-active { color: var(--accent); }
+  .bottom-nav__item:not(.bottom-nav__item--fab):active {
+    background: var(--accent-soft);
+  }
+
+  /* FAB central */
+  .bottom-nav__item--fab {
+    background: var(--accent);
+    color: white;
+    border-radius: 50%;
+    width: 52px;
+    height: 52px;
+    min-width: 52px;
+    padding: 0;
+    flex: 0;
+    box-shadow: var(--shadow-accent);
+    transition: transform var(--dur-fast) var(--ease-spring), background var(--dur-fast);
+  }
+  .bottom-nav__item--fab svg { width: 24px; height: 24px; }
+  .bottom-nav__item--fab:active { transform: scale(0.92); }
+
+  /* Topbar en mobile: más compacto */
+  .topbar { height: 56px; padding: 0 var(--space-4); }
+  .search { max-width: 100%; }
+
+  /* Views: padding ajustado */
+  .view { padding: var(--space-4) var(--space-4) 0; }
+  .view__header { flex-wrap: wrap; gap: var(--space-2); }
+
+  /* Stats grid: 2 columnas en mobile */
+  .stats-grid { grid-template-columns: 1fr 1fr; gap: var(--space-3); }
+
+  /* Cards: más espacio táctil */
+  .task-card { padding: var(--space-3) var(--space-4); min-height: 64px; }
+  .task-check { width: 28px; height: 28px; }
+
+  /* Filtros en mobile */
+  .filters-bar {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: var(--space-2);
+    gap: var(--space-2);
+    scrollbar-width: none;
+  }
+  .filters-bar::-webkit-scrollbar { display: none; }
+  .filters-bar .select { flex-shrink: 0; }
+
+  /* Calendario en mobile */
+  .cal-grid { font-size: 0.8rem; }
+  .cal-header th { padding: var(--space-1); font-size: 0.7rem; }
+  .cal-cell { min-height: 56px; padding: var(--space-1); }
+  .cal-cell__num { font-size: 0.78rem; }
+  .cal-event-strip { font-size: 0.65rem; padding: 2px 4px; }
+
+  /* Onboarding en mobile */
+  .onboarding__content { padding: var(--space-5) var(--space-4); }
+  .ob-illustration { height: 160px; }
+  .ob-title { font-size: 1.5rem; }
+
+  /* Ocultar el sidebar toggle en el topbar en mobile (se navega con bottom nav) */
+  #sidebar-toggle { display: none; }
+
+  /* Modals en mobile: scroll interno */
+  .modal__body { max-height: 70dvh; overflow-y: auto; }
+
+  /* Toast en mobile */
+  .toaster {
+    bottom: calc(76px + env(safe-area-inset-bottom));
+    left: var(--space-3);
+    right: var(--space-3);
+    align-items: stretch;
+  }
+  .toast { width: 100%; }
+}
+
+/* ====================== TOAST MEJORADO ====================== */
+.toast {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+}
+.toast__icon {
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+.toast__text { flex: 1; min-width: 0; }
+
+/* ====================== TOPBAR: ocultar toggle en desktop si no es útil ====================== */
+@media (min-width: 881px) {
+  #sidebar-toggle {
+    display: inline-flex; /* visible para colapsar sidebar */
+  }
+}
+
+/* ====================== CALENDARIO event strip ====================== */
+.cal-event-strip {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+.cal-event-strip svg { flex-shrink: 0; }
+.cal-event-strip__label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+}
+
+/* ====================== MEJORAS GENERALES MOBILE ====================== */
+@media (max-width: 480px) {
+  .stats-grid { grid-template-columns: 1fr 1fr; }
+  .stat-card { padding: var(--space-3); }
+  .stat-card__value { font-size: 1.6rem; }
+  .view__title { font-size: 1.4rem; }
+  .filters-bar { gap: var(--space-1); }
+}
+
+/* ====================== PWA SAFE AREAS ====================== */
+@supports (padding: max(0px)) {
+  .topbar { padding-left: max(var(--space-6), env(safe-area-inset-left)); }
+  .sidebar { padding-left: max(var(--space-4), env(safe-area-inset-left)); }
 }

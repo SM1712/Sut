@@ -91,6 +91,11 @@
 
 .shake { animation: shake 0.32s var(--ease-out); }
 
+@keyframes sheetIn {
+  from { transform: translateY(100%); }
+  to   { transform: translateY(0); }
+}
+
 @keyframes pop {
   0% { transform: scale(0); }
   60% { transform: scale(1.18); }
