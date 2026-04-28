@@ -1923,8 +1923,9 @@ input[type="range"]::-moz-range-thumb {
   .ob-illustration { height: 160px; }
   .ob-title { font-size: 1.5rem; }
 
-  /* Ocultar el sidebar toggle en el topbar en mobile (se navega con bottom nav) */
-  #sidebar-toggle { display: none; }
+  /* Sidebar toggle visible en móvil para acceder a login/logout, espacio,
+     personalizar y guía rápida. La navegación principal va por bottom-nav. */
+  #sidebar-toggle { display: inline-flex; }
 
   /* Modals en mobile: scroll interno */
   .modal__body { max-height: 70dvh; overflow-y: auto; }

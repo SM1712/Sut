@@ -4,7 +4,7 @@
  */
 
 import { store } from './store.js';
-import { $, $$, escapeHTML } from './utils.js';
+import { $, $$, escapeHTML, focusIfDesktop } from './utils.js';
 import { toast } from './toasts.js';
 import { confirmDialog } from './confirm.js';
 
@@ -93,7 +93,7 @@ export const openEventModal = (id = null, prefillStart = null, prefillEnd = null
   }
 
   modal.hidden = false;
-  setTimeout(() => form.querySelector('[name="title"]').focus(), 60);
+  focusIfDesktop(form.querySelector('[name="title"]'));
 };
 
 const closeModal = () => { modal.hidden = true; editingId = null; };

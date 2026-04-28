@@ -3,7 +3,7 @@
  */
 
 import { store } from './store.js';
-import { $, $$, escapeHTML } from './utils.js';
+import { $, $$, escapeHTML, focusIfDesktop } from './utils.js';
 import { toast } from './toasts.js';
 import { confirmDialog } from './confirm.js';
 
@@ -52,7 +52,7 @@ export const openCourseModal = (id = null) => {
     renderColorPicker(COLORS[Math.floor(Math.random() * COLORS.length)]);
   }
   modal.hidden = false;
-  setTimeout(() => form.elements.name.focus(), 60);
+  focusIfDesktop(form.elements.name);
 };
 
 const closeModal = () => { modal.hidden = true; editingId = null; };

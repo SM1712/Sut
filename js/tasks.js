@@ -6,7 +6,7 @@
 
 import { store } from './store.js';
 import { $, $$, escapeHTML, parseDue, relativeDue, fmtTime,
-         computeEffectivePriority, escaladeLabel } from './utils.js';
+         computeEffectivePriority, escaladeLabel, focusIfDesktop } from './utils.js';
 import { toast } from './toasts.js';
 import { renderTagPicker, getPickerSelection } from './tags.js';
 import { confirmDialog } from './confirm.js';
@@ -262,7 +262,8 @@ export const openTaskModal = (id = null) => {
   }
 
   modal.hidden = false;
-  setTimeout(() => form.elements.title.focus(), 80);
+  // Solo auto-focus en desktop: en móvil dispara el teclado virtual y molesta
+  focusIfDesktop(form.elements.title, 80);
 };
 
 const closeModal = () => { modal.hidden = true; editingId = null; };

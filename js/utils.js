@@ -19,6 +19,24 @@ export const debounce = (fn, ms = 200) => {
 
 export const clamp = (n, min, max) => Math.max(min, Math.min(max, n));
 
+/**
+ * Detecta dispositivo táctil (móvil/tablet) para evitar comportamientos
+ * intrusivos como auto-focus que disparan el teclado virtual.
+ * `(pointer: coarse)` es la consulta más fiable: true en touch sin mouse.
+ */
+export const isTouchDevice = () =>
+  typeof window !== 'undefined' &&
+  (window.matchMedia?.('(pointer: coarse)').matches ?? false);
+
+/**
+ * Hace focus al elemento solo si NO es dispositivo táctil. Evita que abrir
+ * un modal en móvil dispare el teclado del sistema.
+ */
+export const focusIfDesktop = (el, delay = 60) => {
+  if (!el || isTouchDevice()) return;
+  setTimeout(() => el.focus(), delay);
+};
+
 /* ============== Fechas ============== */
 
 export const todayISO = () => new Date().toISOString().slice(0, 10);
