@@ -50,6 +50,30 @@ export const renderUserBadge = (user) => {
     $('#login-btn')?.removeAttribute('hidden');
     $('#logout-btn')?.setAttribute('hidden', '');
   }
+  // Sincroniza el botón de cuenta del topbar
+  renderAccountBtn(user);
+};
+
+/** Refleja el estado de auth en el botón de cuenta del topbar (móvil/desktop). */
+const renderAccountBtn = (user) => {
+  const btn = $('#account-btn');
+  if (!btn) return;
+  const anon = btn.querySelector('.account-btn__icon-anon');
+  const av   = btn.querySelector('.account-btn__avatar');
+  if (user && user.photoURL) {
+    av.src = user.photoURL;
+    av.alt = user.displayName || user.email || '';
+    av.hidden = false;
+    if (anon) anon.style.display = 'none';
+    btn.classList.add('is-signed-in');
+    btn.title = `Cuenta: ${user.displayName || user.email}`;
+  } else {
+    av.hidden = true;
+    av.removeAttribute('src');
+    if (anon) anon.style.display = '';
+    btn.classList.remove('is-signed-in');
+    btn.title = user ? 'Cuenta' : 'Iniciar sesión';
+  }
 };
 
 /* ── Detectar móvil/standalone (popup falla en estos contextos) ── */
@@ -110,10 +134,26 @@ export const getCurrentUser = () => _currentUser;
 
 /* ── Init ────────────────────────────────────────────────────── */
 export const initAuth = async (onLogin, onLogout) => {
-  const auth = await initFirebase();
-
+  // Listeners de UI ANTES del await: si Firebase falla o tarda en cargar,
+  // los botones siguen funcionando (especialmente account-btn que solo
+  // abre el sidebar y no requiere Firebase).
   $('#login-btn')?.addEventListener('click', loginWithGoogle);
   $('#logout-btn')?.addEventListener('click', logout);
+
+  // Botón cuenta del topbar: abre el sidebar donde están login/logout y
+  // el resto de opciones de cuenta. Comportamiento idéntico al hamburguesa
+  // pero más descubrible para el usuario que busca "iniciar sesión".
+  $('#account-btn')?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (window.innerWidth <= 880) {
+      $('#app')?.classList.add('is-sidebar-open');
+    } else {
+      // En desktop el sidebar siempre está visible; si estaba colapsado, expánde.
+      $('#app')?.classList.remove('is-sidebar-collapsed');
+    }
+  });
+
+  const auth = await initFirebase();
 
   if (!auth) {
     renderUserBadge(null);

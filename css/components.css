@@ -271,6 +271,27 @@
 .icon-btn svg { width: 18px; height: 18px; }
 .icon-btn--ghost { border-color: transparent; }
 
+/* Account button (topbar): avatar si hay sesión, logo Google si no */
+.account-btn {
+  position: relative;
+  padding: 0;
+  overflow: hidden;
+  display: inline-flex;
+}
+.account-btn__avatar {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  position: absolute;
+  inset: 2px;
+  width: calc(100% - 4px);
+  height: calc(100% - 4px);
+}
+.account-btn.is-signed-in {
+  border: 2px solid var(--accent);
+}
+
 /* Theme toggle: muestra sol o luna según data-theme */
 #theme-toggle .icon-sun,
 #theme-toggle .icon-moon { transition: opacity var(--dur), transform var(--dur); }

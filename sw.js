@@ -2,7 +2,7 @@
  * SUT Service Worker — estrategia Cache-First para assets estáticos,
  * Network-First para datos dinámicos (Firebase).
  */
-const CACHE_NAME = 'sut-v2';
+const CACHE_NAME = 'sut-v3';
 // Rutas relativas al scope del SW (que es el directorio donde vive sw.js).
 // Esto permite que la PWA se instale tanto en root (/) como en subpaths
 // (/SUT/, /apps/sut/, etc.) sin dar 404 al pre-cachear.
