@@ -95,9 +95,6 @@ export const renderCalendar = () => {
       cell.appendChild(more);
     }
 
-    /* Click en celda vacía → nuevo evento con esa fecha */
-    cell.addEventListener('click', () => openEventModal(null, isoDate));
-
     grid.appendChild(cell);
   }
 
@@ -115,8 +112,82 @@ export const renderCalendar = () => {
   root.appendChild(head);
   root.appendChild(grid);
 
+  /* ── Drag-to-create: arrastra entre celdas para crear evento multi-día ── */
+  enableDragCreate(grid);
+
   /* ── Leyenda de eventos del mes ── */
   renderCalendarLegend(year, month);
+};
+
+/**
+ * Habilita drag-to-create en la grilla.
+ * - Click simple sobre celda → modal con esa fecha
+ * - Drag (pointer down + move sobre otra celda) → modal con startDate/endDate
+ * - Resalta celdas en el rango durante el drag para feedback visual.
+ */
+const enableDragCreate = (grid) => {
+  /** @type {HTMLElement|null} */ let startCell = null;
+  /** @type {HTMLElement|null} */ let endCell   = null;
+  let dragging = false;
+
+  const cellAt = (target) => target?.closest?.('.cal-day:not(.is-out)[data-date]');
+
+  /** Aplica/quita .is-drag-selected a las celdas del rango. */
+  const paintRange = () => {
+    grid.querySelectorAll('.cal-day.is-drag-selected').forEach(c => c.classList.remove('is-drag-selected'));
+    if (!startCell || !endCell) return;
+    const a = startCell.dataset.date, b = endCell.dataset.date;
+    const [from, to] = a <= b ? [a, b] : [b, a];
+    grid.querySelectorAll('.cal-day[data-date]').forEach(c => {
+      const d = c.dataset.date;
+      if (d >= from && d <= to) c.classList.add('is-drag-selected');
+    });
+  };
+
+  const reset = () => {
+    grid.querySelectorAll('.cal-day.is-drag-selected').forEach(c => c.classList.remove('is-drag-selected'));
+    startCell = endCell = null;
+    dragging = false;
+  };
+
+  grid.addEventListener('pointerdown', (e) => {
+    // Ignorar click sobre tareas o eventos existentes
+    if (e.target.closest('.cal-day__task, .cal-event-strip')) return;
+    const cell = cellAt(e.target);
+    if (!cell) return;
+    startCell = endCell = cell;
+    dragging = true;
+    paintRange();
+    // Capturamos el pointer para recibir move/up incluso fuera del grid
+    grid.setPointerCapture?.(e.pointerId);
+  });
+
+  grid.addEventListener('pointermove', (e) => {
+    if (!dragging) return;
+    const cell = cellAt(document.elementFromPoint(e.clientX, e.clientY));
+    if (cell && cell !== endCell) {
+      endCell = cell;
+      paintRange();
+    }
+  });
+
+  const finish = (e) => {
+    if (!dragging || !startCell) { reset(); return; }
+    const a = startCell.dataset.date, b = endCell?.dataset.date || a;
+    const [from, to] = a <= b ? [a, b] : [b, a];
+    const isRange = from !== to;
+    reset();
+    // Abrir modal con prefill (si es un click simple, solo from; si drag, range)
+    openEventModal(null, from, isRange ? to : null);
+  };
+
+  grid.addEventListener('pointerup', finish);
+  grid.addEventListener('pointercancel', () => reset());
+  // Si el pointer sale de la ventana
+  grid.addEventListener('pointerleave', (e) => {
+    // Solo cancelar si NO estamos arrastrando (mantenemos selección si pointer capture activo)
+    if (!grid.hasPointerCapture?.(e.pointerId)) {/* nada */}
+  });
 };
 
 /* ── Leyenda de tipos de evento visibles en el mes ── */

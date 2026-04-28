@@ -63,7 +63,7 @@
 
       <div class="sidebar__footer">
         <!-- Space chip (visible cuando hay espacio activo) -->
-        <div class="space-chip" id="space-chip" hidden title="Clic para copiar el código del espacio">
+        <div class="space-chip" id="space-chip" hidden title="Administrar espacio (miembros, código, ajustes)">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
           <div class="space-chip__info">
             <span class="space-chip__name">Mi Espacio</span>
@@ -750,8 +750,12 @@
         </section>
 
         <section class="setting-block">
-          <h3 class="setting-block__title">Volver a ver el tutorial</h3>
-          <button type="button" class="btn btn--ghost" id="replay-onboarding">Mostrar guía rápida</button>
+          <h3 class="setting-block__title">Tutoriales</h3>
+          <div class="setting-actions">
+            <button type="button" class="btn btn--ghost" id="replay-onboarding">Guía rápida</button>
+            <button type="button" class="btn btn--ghost" id="reset-tours">Reactivar tours por página</button>
+          </div>
+          <div class="setting-block__hint">La guía rápida es la introducción general. Los tours por página explican cada vista la primera vez que entras.</div>
         </section>
 
       </div>

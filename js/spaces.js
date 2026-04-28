@@ -15,6 +15,7 @@ import { FIREBASE_ENABLED, firebaseConfig } from './firebase-config.js';
 import { store } from './store.js';
 import { $, escapeHTML } from './utils.js';
 import { toast } from './toasts.js';
+import { confirmDialog } from './confirm.js';
 
 /* ─── Estado del módulo ────────────────────────────────────────── */
 let _db   = null;
@@ -281,13 +282,9 @@ export const initSpaces = () => {
     }
   });
 
-  // Chip → copiar código
+  // Chip → abrir admin del espacio (incluye copiar código, miembros, salir, etc.)
   $('#space-chip')?.addEventListener('click', () => {
-    const code = store.state.meta.spaceId;
-    if (!code) return;
-    navigator.clipboard?.writeText(code).then(() => {
-      toast(`Código "${code}" copiado al portapapeles`, { type: 'success' });
-    });
+    if (store.state.meta.spaceId) showSpaceAdmin();
   });
 
   // Botón Google en onboarding
@@ -298,4 +295,222 @@ export const initSpaces = () => {
 
   // Render inicial del chip (si ya hay un espacio guardado en localStorage)
   renderSpaceChip();
+
+  // Init del admin modal
+  initSpaceAdmin();
+};
+
+/* ═══════════════════════════════════════════════════════════════
+   ADMIN DE ESPACIOS — ver miembros, renombrar, salir, eliminar
+   ═══════════════════════════════════════════════════════════════ */
+
+/** Lee el documento del espacio (incluye members[], createdBy, name). */
+const fetchSpaceData = async (spaceId) => {
+  const db = await getDB();
+  if (!db) return null;
+  const { doc, getDoc } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
+  const snap = await getDoc(doc(db, 'spaces', spaceId));
+  return snap.exists() ? snap.data() : null;
+};
+
+/** Renombra el espacio (solo el creador). */
+const updateSpaceName = async (spaceId, newName) => {
+  const db = await getDB();
+  if (!db) throw new Error('Firebase no disponible');
+  const { doc, updateDoc } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
+  await updateDoc(doc(db, 'spaces', spaceId), { name: newName });
+  store.setSpaceId(spaceId, newName);
+  if (_user) await saveUserProfile(_user.uid, { spaceId, spaceName: newName });
+};
+
+/** Salir del espacio: elimina al usuario de members[] y limpia local. */
+const leaveSpace = async (spaceId) => {
+  const db = await getDB();
+  if (!db || !_user) throw new Error('Sesión requerida');
+  const { doc, getDoc, updateDoc } =
+    await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
+
+  const ref  = doc(db, 'spaces', spaceId);
+  const snap = await getDoc(ref);
+  if (snap.exists()) {
+    const data = snap.data();
+    const members    = (data.members    || []).filter(m => m.uid !== _user.uid);
+    const memberUids = (data.memberUids || []).filter(u => u !== _user.uid);
+    await updateDoc(ref, { members, memberUids });
+  }
+  // Limpia el spaceId del perfil del usuario
+  await saveUserProfile(_user.uid, { spaceId: null, spaceName: '' });
+  // Limpia local: el usuario sigue logueado pero sin espacio
+  store.clearSessionAndSpace();
+  // Re-aplica el uid (no hicimos logout de Firebase Auth)
+  store.state.meta.uid   = _user.uid;
+  store.state.meta.email = _user.email;
+};
+
+/** Elimina el espacio entero (solo creador). Borra subcolecciones. */
+const deleteSpace = async (spaceId) => {
+  const db = await getDB();
+  if (!db || !_user) throw new Error('Sesión requerida');
+  const { doc, deleteDoc, collection, getDocs, writeBatch } =
+    await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
+
+  // Borra subcolecciones en lote (Firestore no las cascadea)
+  for (const col of ['tasks', 'courses', 'tags', 'events']) {
+    const snap  = await getDocs(collection(db, 'spaces', spaceId, col));
+    const batch = writeBatch(db);
+    snap.docs.forEach(d => batch.delete(d.ref));
+    if (snap.size) await batch.commit();
+  }
+  await deleteDoc(doc(db, 'spaces', spaceId));
+  await saveUserProfile(_user.uid, { spaceId: null, spaceName: '' });
+  store.clearSessionAndSpace();
+  store.state.meta.uid   = _user.uid;
+  store.state.meta.email = _user.email;
+};
+
+/** Renderiza el contenido del modal admin. */
+export const showSpaceAdmin = async () => {
+  const modal = $('#space-admin-modal');
+  const body  = $('#space-admin-body');
+  if (!modal || !body) return;
+
+  const spaceId = store.state.meta.spaceId;
+  if (!spaceId) {
+    toast('No estás en un espacio compartido', { type: 'info' });
+    return;
+  }
+
+  modal.hidden = false;
+  body.innerHTML = `<p style="text-align:center;color:var(--text-mute);padding:1.5rem">Cargando…</p>`;
+
+  const data = await fetchSpaceData(spaceId);
+  if (!data) {
+    body.innerHTML = `<p style="text-align:center;color:var(--danger);padding:1rem">No se pudo cargar el espacio (¿borrado o sin conexión?).</p>`;
+    return;
+  }
+
+  const isOwner = _user && data.createdBy === _user.uid;
+  const members = data.members || [];
+
+  body.innerHTML = `
+    <section class="admin-section">
+      <h3 class="admin-section__title">Información</h3>
+      <div class="admin-info-grid">
+        <label class="field">
+          <span class="field__label">Nombre del espacio</span>
+          <input class="input" id="admin-space-name" type="text" value="${escapeHTML(data.name || '')}" maxlength="40" ${isOwner ? '' : 'disabled'} />
+        </label>
+        <label class="field">
+          <span class="field__label">Código (compartir)</span>
+          <div class="admin-code">
+            <code>${escapeHTML(data.code || spaceId)}</code>
+            <button type="button" class="btn btn--ghost btn--sm" id="admin-copy-code">Copiar</button>
+          </div>
+        </label>
+      </div>
+      ${isOwner ? `<button type="button" class="btn btn--primary btn--sm" id="admin-save-name" disabled style="margin-top:.5rem">Guardar nombre</button>` : `<p class="field__hint">Solo quien creó el espacio puede renombrarlo.</p>`}
+    </section>
+
+    <section class="admin-section">
+      <h3 class="admin-section__title">Miembros (${members.length})</h3>
+      <ul class="member-list">
+        ${members.map(m => `
+          <li class="member">
+            ${m.photo ? `<img class="member__avatar" src="${escapeHTML(m.photo)}" alt="" />` : `<span class="member__avatar member__avatar--placeholder">${escapeHTML((m.name||m.email||'?').slice(0,1).toUpperCase())}</span>`}
+            <div class="member__info">
+              <span class="member__name">${escapeHTML(m.name || m.email || 'Anónimo')}</span>
+              <span class="member__meta">${escapeHTML(m.email || '')}${m.uid === data.createdBy ? ' · Creador' : ''}${_user && m.uid === _user.uid ? ' · Tú' : ''}</span>
+            </div>
+          </li>`).join('')}
+      </ul>
+    </section>
+
+    <section class="admin-section admin-section--danger">
+      <h3 class="admin-section__title">Zona peligrosa</h3>
+      <div class="admin-actions">
+        <button type="button" class="btn btn--ghost" id="admin-leave">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          Salir del espacio
+        </button>
+        ${isOwner ? `<button type="button" class="btn btn--danger" id="admin-delete">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+          Eliminar espacio
+        </button>` : ''}
+      </div>
+      <p class="field__hint">Salir conserva el espacio para los demás miembros. Eliminar borra el espacio y todos sus datos para todos.</p>
+    </section>
+  `;
+
+  // Wiring de acciones
+  $('#admin-copy-code')?.addEventListener('click', () => {
+    navigator.clipboard?.writeText(data.code || spaceId)
+      .then(() => toast('Código copiado', { type: 'success' }));
+  });
+
+  if (isOwner) {
+    const nameInput = $('#admin-space-name');
+    const saveBtn   = $('#admin-save-name');
+    nameInput?.addEventListener('input', () => {
+      saveBtn.disabled = !nameInput.value.trim() || nameInput.value.trim() === data.name;
+    });
+    saveBtn?.addEventListener('click', async () => {
+      const newName = nameInput.value.trim();
+      if (!newName) return;
+      saveBtn.disabled = true; saveBtn.textContent = 'Guardando…';
+      try {
+        await updateSpaceName(spaceId, newName);
+        toast('Nombre actualizado', { type: 'success' });
+        renderSpaceChip();
+        data.name = newName;
+        saveBtn.textContent = 'Guardar nombre';
+      } catch (err) {
+        toast('Error: ' + err.message, { type: 'danger' });
+        saveBtn.disabled = false; saveBtn.textContent = 'Guardar nombre';
+      }
+    });
+
+    $('#admin-delete')?.addEventListener('click', async () => {
+      const ok = await confirmDialog({
+        title: `¿Eliminar "${data.name}"?`,
+        text: `Se borrará el espacio y TODOS sus datos (tareas, cursos, etiquetas, eventos) para los ${members.length} miembros. Esta acción es irreversible.`,
+        confirmText: 'Eliminar para todos',
+        icon: 'warn',
+      });
+      if (!ok) return;
+      try {
+        await deleteSpace(spaceId);
+        toast('Espacio eliminado', { type: 'warn' });
+        modal.hidden = true;
+        renderSpaceChip();
+        showSpaceModal();  // forzar a elegir/crear otro
+      } catch (err) {
+        toast('Error: ' + err.message, { type: 'danger' });
+      }
+    });
+  }
+
+  $('#admin-leave')?.addEventListener('click', async () => {
+    const ok = await confirmDialog({
+      title: '¿Salir del espacio?',
+      text: 'Tus datos colaborativos se quedarán en el espacio para los demás. Tu copia local se limpiará y podrás unirte a otro espacio.',
+      confirmText: 'Sí, salir',
+    });
+    if (!ok) return;
+    try {
+      await leaveSpace(spaceId);
+      toast('Saliste del espacio', { type: 'info' });
+      modal.hidden = true;
+      renderSpaceChip();
+      showSpaceModal();
+    } catch (err) {
+      toast('Error: ' + err.message, { type: 'danger' });
+    }
+  });
+};
+
+const initSpaceAdmin = () => {
+  const modal = $('#space-admin-modal');
+  modal?.addEventListener('click', (e) => {
+    if (e.target.closest('[data-close]')) modal.hidden = true;
+  });
 };

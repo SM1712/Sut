@@ -23,6 +23,7 @@ import { initSpaces, setSpaceUser, getUserSpaceId,
          hydrateFromSpace, renderSpaceChip,
          showSpaceModal }                  from './spaces.js';
 import { confirmDialog }                   from './confirm.js';
+import { startTour, resetTours }           from './tour.js';
 
 /* ================================================================
    VISTAS
@@ -46,6 +47,13 @@ const showView = (name) => {
   renderView(name);
 
   if (window.innerWidth <= 880) $('#app').classList.remove('is-sidebar-open');
+
+  // Tour por página: se muestra solo después del onboarding inicial
+  // y solo la primera vez que el usuario entra a esa vista.
+  if (store.state.meta.onboarded) {
+    // Pequeño delay para que el render de la vista esté completo
+    setTimeout(() => startTour(name), 350);
+  }
 };
 
 const renderView = (name) => {
@@ -138,6 +146,12 @@ const initDataActions = () => {
   });
 
   $('#replay-onboarding')?.addEventListener('click', () => { closeSettings(); setTimeout(showOnboarding, 200); });
+  $('#reset-tours')?.addEventListener('click', () => {
+    resetTours();
+    closeSettings();
+    toast('Los tours por página volverán a aparecer', { type: 'success' });
+    setTimeout(() => startTour(currentView, { force: true }), 250);
+  });
   $('#open-help')?.addEventListener('click', showOnboarding);
 };
 
@@ -177,6 +191,8 @@ const onLogin = async (user) => {
     // Carga datos del espacio compartido
     await hydrateFromSpace(spaceId);
     renderSpaceChip();
+    // Tour del espacio: solo la primera vez que entra a uno
+    setTimeout(() => startTour('space'), 800);
   } else {
     // Primera vez: sube datos locales a cuenta personal y muestra modal de espacio
     await hydrateFromFirestore(user.uid);
@@ -259,7 +275,9 @@ if (document.readyState === 'loading') {
 /* ── Service Worker (PWA) ────────────────────────────────────── */
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js')
+    // Registro relativo: funciona tanto en root como en subpaths
+    // (ej: GitHub Pages /SUT/ o Firebase Hosting custom path).
+    navigator.serviceWorker.register('sw.js', { scope: './' })
       .then(reg => {
         // Auto-actualización silenciosa
         reg.addEventListener('updatefound', () => {

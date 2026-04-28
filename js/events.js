@@ -69,7 +69,7 @@ const buildTypeOptions = (selected = 'exam') => {
 };
 
 /* ── Modal ───────────────────────────────────────────────────── */
-export const openEventModal = (id = null, prefillDate = null) => {
+export const openEventModal = (id = null, prefillStart = null, prefillEnd = null) => {
   editingId = id;
   form.reset();
   $('#event-modal-title').textContent = id ? 'Editar evento' : 'Nuevo evento';
@@ -85,9 +85,9 @@ export const openEventModal = (id = null, prefillDate = null) => {
     buildTypeOptions(ev.type);
     buildColorPicker(ev.color);
   } else {
-    const today = prefillDate || new Date().toISOString().slice(0, 10);
+    const today = prefillStart || new Date().toISOString().slice(0, 10);
     form.elements.startDate.value = today;
-    form.elements.endDate.value   = today;
+    form.elements.endDate.value   = prefillEnd || today;
     buildTypeOptions('exam');
     buildColorPicker(EVENT_TYPES['exam'].color);
   }
