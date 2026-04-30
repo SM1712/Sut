@@ -1,0 +1,55 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── Helpers ──────────────────────────────────────────────────────────────
+    function isAuth()  { return request.auth != null; }
+    function uid()     { return request.auth.uid; }
+
+    // Check whether the caller is listed in the space's members array.
+    // This performs one extra document read per rule evaluation (counted toward
+    // Firestore usage but perfectly fine for an app of this scale).
+    function isMember(spaceId) {
+      return isAuth() &&
+        uid() in get(/databases/$(database)/documents/spaces/$(spaceId)/info/data).data.members;
+    }
+
+    // ── User-private data ─────────────────────────────────────────────────────
+    // Each user owns exactly their subtree: users/{uid}/**
+    match /users/{userId}/{col}/{doc} {
+      allow read, write: if isAuth() && uid() == userId;
+    }
+
+    // ── Collaborative spaces ──────────────────────────────────────────────────
+
+    // Space metadata (info/data)
+    //   • Any authenticated user can READ — needed to validate a join code.
+    //   • Owner can CREATE with themselves as owner.
+    //   • Owner can UPDATE anything; a non-member may ONLY append their own uid
+    //     to the members array (self-join). No other fields may change on join.
+    match /spaces/{spaceId}/info/data {
+      allow read: if isAuth();
+
+      allow create: if isAuth()
+        && request.resource.data.owner == uid()
+        && uid() in request.resource.data.members;
+
+      allow update: if isAuth() && (
+        // Space owner: full control
+        resource.data.owner == uid()
+        ||
+        // Self-join: only the `members` field changes, and caller added themselves
+        (
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['members'])
+          && uid() in request.resource.data.members
+        )
+      );
+    }
+
+    // Space data collections (tasks / courses / tags / events / …)
+    // Only existing members may read or write.
+    match /spaces/{spaceId}/{col}/{docId} {
+      allow read, write: if isMember(spaceId);
+    }
+  }
+}

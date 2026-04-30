@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 64" fill="none">
+  <defs>
+    <linearGradient id="lg" x1="0" y1="0" x2="64" y2="64" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#4F6BFF"/>
+      <stop offset="100%" stop-color="#6E5BFF"/>
+    </linearGradient>
+  </defs>
+  <rect x="2" y="2" width="60" height="60" rx="16" fill="url(#lg)"/>
+  <path d="M18 22h28" stroke="#fff" stroke-width="3.2" stroke-linecap="round" opacity="0.55"/>
+  <path d="M18 32h20" stroke="#fff" stroke-width="3.2" stroke-linecap="round" opacity="0.85"/>
+  <path d="M18 42h14" stroke="#fff" stroke-width="3.2" stroke-linecap="round" opacity="0.4"/>
+  <path d="M40 40.5l4.2 4.5L52 36.5" stroke="#fff" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="78" y="38" font-family="Inter, system-ui, sans-serif" font-size="22" font-weight="700" fill="currentColor" letter-spacing="1">SUT</text>
+  <text x="78" y="54" font-family="Inter, system-ui, sans-serif" font-size="10" font-weight="500" fill="currentColor" opacity="0.6" letter-spacing="2">SISTEMA UNIVERSAL DE TAREAS</text>
+</svg>

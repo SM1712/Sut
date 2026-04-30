@@ -1,0 +1,23 @@
+/* ── Keyframes ── */
+@keyframes fade-in        { from { opacity: 0 } to { opacity: 1 } }
+@keyframes slide-up       { from { opacity: 0; transform: translateY(12px) } to { opacity: 1; transform: translateY(0) } }
+@keyframes slide-down     { from { opacity: 0; transform: translateY(-10px) } to { opacity: 1; transform: translateY(0) } }
+@keyframes slide-right    { from { opacity: 0; transform: translateX(-12px) } to { opacity: 1; transform: translateX(0) } }
+@keyframes scale-in       { from { opacity: 0; transform: scale(.94) } to { opacity: 1; transform: scale(1) } }
+@keyframes pop            { 0%,100% { transform: scale(1) } 40% { transform: scale(1.22) } 70% { transform: scale(.9) } }
+@keyframes shake          { 0%,100% { transform: translateX(0) } 25% { transform: translateX(-4px) } 75% { transform: translateX(4px) } }
+@keyframes pulse-ring     { 0% { box-shadow: 0 0 0 0 var(--accent-soft) } 70% { box-shadow: 0 0 0 8px transparent } 100% { box-shadow: 0 0 0 0 transparent } }
+@keyframes pulse-green    { 0% { box-shadow: 0 0 0 0 var(--success-soft) } 70% { box-shadow: 0 0 0 8px transparent } 100% { box-shadow: 0 0 0 0 transparent } }
+@keyframes shimmer        { 0% { background-position: -200% 0 } 100% { background-position: 200% 0 } }
+@keyframes spin           { to { transform: rotate(360deg) } }
+@keyframes bounce-in      { 0% { opacity: 0; transform: scale(.4) } 60% { transform: scale(1.08) } 80% { transform: scale(.96) } 100% { opacity: 1; transform: scale(1) } }
+@keyframes toast-in       { from { opacity: 0; transform: translateY(8px) scale(.96) } to { opacity: 1; transform: translateY(0) scale(1) } }
+@keyframes toast-out      { to   { opacity: 0; transform: translateY(4px) scale(.95) } }
+
+/* ── Utility classes ── */
+.anim-fade    { animation: fade-in  var(--dur) var(--ease-out) both; }
+.anim-up      { animation: slide-up var(--dur) var(--ease-out) both; }
+.anim-scale   { animation: scale-in var(--dur) var(--ease-out) both; }
+.anim-pop     { animation: pop 320ms var(--ease-spring) both; }
+.anim-shake   { animation: shake 300ms var(--ease-out) both; }
+.anim-spin    { animation: spin 700ms linear infinite; }
