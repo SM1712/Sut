@@ -79,10 +79,6 @@ const isMobileOrStandalone = () => {
 export const loginWithGoogle = async (): Promise<User | null> => {
   const auth = getFirebaseAuth();
   const provider = getGoogleProvider();
-  if (isMobileOrStandalone()) {
-    await signInWithRedirect(auth, provider);
-    return null;
-  }
   try {
     const result = await signInWithPopup(auth, provider);
     return result.user;
