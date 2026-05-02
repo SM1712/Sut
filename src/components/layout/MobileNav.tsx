@@ -1,5 +1,6 @@
 import { NavLink } from 'react-router-dom';
 import { LayoutDashboard, CheckSquare, Calendar, BookOpen, TrendingUp } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { useStore } from '../../store';
 
 const ITEMS = [
@@ -23,13 +24,24 @@ export default function MobileNav() {
             end={to === '/'}
             className={({ isActive }) => `mobile-nav__item${isActive ? ' is-active' : ''}`}
           >
-            <div className="mobile-nav__icon-wrap">
-              <Icon size={22} />
-              {label === 'Tareas' && pending > 0 && (
-                <span className="mobile-nav__badge">{pending > 9 ? '9+' : pending}</span>
-              )}
-            </div>
-            <span>{label}</span>
+            {({ isActive }) => (
+              <>
+                <div className="mobile-nav__icon-wrap">
+                  {isActive && (
+                    <motion.span
+                      layoutId="nav-pill"
+                      className="mobile-nav__pill"
+                      transition={{ type: 'spring', damping: 26, stiffness: 380 }}
+                    />
+                  )}
+                  <Icon size={22} className="mobile-nav__icon" />
+                  {label === 'Tareas' && pending > 0 && (
+                    <span className="mobile-nav__badge">{pending > 9 ? '9+' : pending}</span>
+                  )}
+                </div>
+                <span className="mobile-nav__label">{label}</span>
+              </>
+            )}
           </NavLink>
         ))}
       </div>

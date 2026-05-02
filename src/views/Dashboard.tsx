@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CheckCircle2, Clock, AlertTriangle, BookOpen, Plus, Users, Wifi } from 'lucide-react';
 import { useStore } from '../store';
-import { parseDue, computeEffectivePriority } from '../lib/utils';
+import { parseDue, computeEffectivePriority, relativeDue } from '../lib/utils';
 import TaskCard from '../components/tasks/TaskCard';
 import TaskModal from '../components/tasks/TaskModal';
 import SpacePanel from '../components/spaces/SpacePanel';
@@ -53,6 +53,29 @@ export default function Dashboard() {
     return { dueToday, overdue, doneWeek, pending };
   }, [tasks]);
 
+  // Focus task: most urgent/overdue pending task — shown as hero card on mobile
+  const focusTask = useMemo(() => {
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const pending = tasks.filter(t => !t.done);
+    if (pending.length === 0) return null;
+    const scored = pending.map(t => {
+      const prio = computeEffectivePriority(t);
+      const prioScore = { urgent: 4, high: 3, medium: 2, low: 1 }[prio];
+      const d = t.dueDate ? new Date(t.dueDate + 'T00:00:00') : null;
+      const isOverdue = d && d < startOfToday;
+      const isToday = d && d.toDateString() === now.toDateString();
+      let score = prioScore;
+      if (isOverdue) score += 10;
+      else if (isToday) score += 5;
+      return { task: t, score };
+    });
+    scored.sort((a, b) => b.score - a.score);
+    const top = scored[0];
+    // Only show for noteworthy tasks (overdue, today, or urgent/high without due date)
+    if (top.score < 3) return null;
+    return top.task;
+  }, [tasks]);
+
   const priorityCounts = useMemo(() => {
     const counts = { low: 0, medium: 0, high: 0, urgent: 0 };
     tasks.filter(t => !t.done).forEach(t => { counts[computeEffectivePriority(t)]++; });
@@ -78,9 +101,10 @@ export default function Dashboard() {
 
   const hour = now.getHours();
   const greeting = hour < 6 ? 'Buenas noches' : hour < 13 ? 'Buen día' : hour < 19 ? 'Buenas tardes' : 'Buenas noches';
+  const dateStr = now.toLocaleDateString('es', { weekday: 'long', day: 'numeric', month: 'long' });
   const greetingSub = stats.overdue > 0
     ? `Tienes ${stats.overdue} tarea${stats.overdue > 1 ? 's' : ''} atrasada${stats.overdue > 1 ? 's' : ''}.`
-    : stats.pending === 0 ? '¡Estás al día! Disfruta el descanso 🎉'
+    : stats.pending === 0 ? '¡Todo al día! Disfruta el descanso.'
     : `Tienes ${stats.pending} tarea${stats.pending > 1 ? 's' : ''} pendiente${stats.pending > 1 ? 's' : ''}.`;
 
   const openEdit = (id: string) => { setEditId(id); setTaskModalOpen(true); };
@@ -120,8 +144,8 @@ export default function Dashboard() {
               animation: 'pulse-green 1.8s ease-out infinite', flexShrink: 0,
             }} />
             <Wifi size={13} />
-            <span style={{ flex: 1 }}>
-              Espacio <strong>{meta.spaceName}</strong> — tareas, cursos, etiquetas y calendario compartidos en tiempo real
+            <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              <strong>{meta.spaceName}</strong>
             </span>
             <button
               className="btn btn--ghost btn--sm"
@@ -143,11 +167,12 @@ export default function Dashboard() {
       >
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 'var(--sp-3)' }}>
           <div>
-            <h1 className="greeting-text">{greeting} ✨</h1>
+            <h1 className="greeting-text">{greeting}</h1>
+            <p className="greeting-date">{dateStr}</p>
             <p className="greeting-sub">{greetingSub}</p>
           </div>
           <button
-            className="btn btn--secondary btn--sm"
+            className="btn btn--collab btn--sm"
             onClick={() => setSpaceOpen(true)}
             style={{ flexShrink: 0, marginTop: 4 }}
           >
@@ -156,6 +181,42 @@ export default function Dashboard() {
           </button>
         </div>
       </motion.div>
+
+      {/* Focus Card — mobile only, hidden on desktop via CSS */}
+      {focusTask && (() => {
+        const fp = computeEffectivePriority(focusTask);
+        const fDue = parseDue(focusTask.dueDate, focusTask.dueTime);
+        const fRel = fDue ? relativeDue(fDue) : null;
+        const fCourse = courses.find(c => c.id === focusTask.courseId);
+        const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        const isOverdue = focusTask.dueDate && new Date(focusTask.dueDate + 'T00:00:00') < startOfToday;
+        return (
+          <div
+            className={`focus-card focus-card--${fp}`}
+            onClick={() => openEdit(focusTask.id)}
+            role="button"
+            tabIndex={0}
+            onKeyDown={e => e.key === 'Enter' && openEdit(focusTask.id)}
+          >
+            <div className="focus-card__eyebrow">
+              {isOverdue ? '⚠️ Atrasada' : fp === 'urgent' ? '🔥 Urgente' : '⚡ Enfoque'}
+            </div>
+            <div className="focus-card__title">{focusTask.title}</div>
+            <div className="focus-card__meta">
+              {fRel && (
+                <span className={`task-card__due${fRel.state === 'overdue' ? ' is-overdue' : fRel.state === 'soon' ? ' is-soon' : ''}`}>
+                  <Clock size={12} />{fRel.text}
+                </span>
+              )}
+              {fCourse && (
+                <span className="course-pill" style={{ '--c': fCourse.color } as React.CSSProperties}>
+                  {fCourse.name}
+                </span>
+              )}
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Stats grid */}
       <motion.div
@@ -212,8 +273,8 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Priority summary */}
-        <div>
+        {/* Priority summary + courses — hidden on mobile (Stats tab handles it) */}
+        <div className="dashboard-aside">
           <div className="section-header">
             <h2 className="section-title">Por prioridad</h2>
           </div>

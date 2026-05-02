@@ -277,7 +277,7 @@ export default function StatsView() {
             </div>
             {stats.pending === 0 ? (
               <div style={{ textAlign: 'center', padding: 'var(--sp-5) 0', color: 'var(--text-faint)', fontSize: '0.875rem' }}>
-                🎉 Sin tareas pendientes
+                Sin tareas pendientes
               </div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--sp-3)' }}>

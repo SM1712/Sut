@@ -17,8 +17,8 @@ const DEFAULT_META: Meta = {
 
 const DEFAULT_SETTINGS: Settings = {
   theme: 'light',
-  accentColor: '#4F6BFF',
-  buttonColor: '#4F6BFF',
+  accentColor: '#8B5CF6',
+  buttonColor: '#8B5CF6',
   textColor: '',
   fontFamily: 'Inter',
   fontScale: 1,

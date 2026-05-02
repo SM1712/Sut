@@ -155,10 +155,7 @@ export default function MonthGrid({ year, month, direction, onTaskClick, onEvent
                       title={ev.title}
                     >
                       {isStart && (
-                        <>
-                          <span style={{ fontSize: 10 }}>{type.emoji}</span>
-                          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{ev.title}</span>
-                        </>
+                        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{ev.title}</span>
                       )}
                     </div>
                   );
@@ -222,7 +219,7 @@ export default function MonthGrid({ year, month, direction, onTaskClick, onEvent
                     onClick={() => onEventClick(ev.id)}
                     title={`${ev.startDate} → ${ev.endDate}`}
                   >
-                    {type.emoji} {ev.title}
+                    {ev.title}
                   </span>
                 );
               })}

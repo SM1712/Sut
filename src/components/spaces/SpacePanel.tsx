@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Users, Plus, LogOut, Copy, Check, RefreshCw, Crown, History, ArrowRight, Wifi, UserCircle2 } from 'lucide-react';
+import { Users, Plus, LogOut, Copy, Check, RefreshCw, Crown, History, ArrowRight, Wifi, UserCircle2, Link2, Sparkles } from 'lucide-react';
 import Modal from '../ui/Modal';
 import { useStore } from '../../store';
 import { useToast } from '../ui/Toast';
@@ -200,7 +200,7 @@ export default function SpacePanel({ open, onClose }: Props) {
       await hydrateFromFirestore(meta.uid!);
       subscribeToData(meta.uid!, upperCode);
 
-      toast(`¡Entraste a "${info.name}"! 🎉`, { type: 'success' });
+      toast(`¡Entraste a "${info.name}"!`, { type: 'success' });
       onClose();
     } catch (e) {
       const err = e as { code?: string };
@@ -543,7 +543,7 @@ export default function SpacePanel({ open, onClose }: Props) {
                   style={{ flex: 1 }}
                   onClick={() => setTab(t)}
                 >
-                  {t === 'join' ? '🔗 Unirse' : '✨ Crear nuevo'}
+                  {t === 'join' ? <><Link2 size={13} /> Unirse</> : <><Sparkles size={13} /> Crear nuevo</>}
                 </button>
               ))}
             </div>

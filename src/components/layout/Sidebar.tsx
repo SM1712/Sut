@@ -79,7 +79,16 @@ function SidebarContent({ onClose, onSettings }: { onClose: () => void; onSettin
     <>
       {/* Logo */}
       <NavLink to="/" className="sidebar__logo" onClick={onClose}>
-        <img src="/assets/logo.svg" alt="SUT" className="sidebar__logo-img" width={28} height={28} />
+        <svg className="sidebar__logo-img" width="30" height="30" viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <rect width="30" height="30" rx="8" fill="url(#sut-grad)"/>
+          <path d="M7 15L12.5 20.5L23 10" stroke="white" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round"/>
+          <defs>
+            <linearGradient id="sut-grad" x1="0" y1="0" x2="30" y2="30" gradientUnits="userSpaceOnUse">
+              <stop stopColor="#A78BFA"/>
+              <stop offset="1" stopColor="#7C3AED"/>
+            </linearGradient>
+          </defs>
+        </svg>
         <span className="sidebar__logo-text">S<span>U</span>T</span>
       </NavLink>
 

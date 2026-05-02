@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Clock, Edit2, Check, Users, Mic } from 'lucide-react';
+import { Clock, Edit2, Check, Users, Mic, Flame, ArrowUp } from 'lucide-react';
 import { useStore } from '../../store';
 import { useToast } from '../ui/Toast';
 import { computeEffectivePriority, escaladeLabel, parseDue, relativeDue } from '../../lib/utils';
@@ -41,7 +41,7 @@ export default function TaskCard({ task, onEdit }: Props) {
   const handleToggle = (e: React.MouseEvent) => {
     e.stopPropagation();
     toggleTask(task.id);
-    toast(!task.done ? '¡Tarea completada! 🎉' : 'Tarea reabierta', { type: 'success' });
+    toast(!task.done ? '¡Tarea completada!' : 'Tarea reabierta', { type: 'success' });
   };
 
   return (
@@ -76,6 +76,17 @@ export default function TaskCard({ task, onEdit }: Props) {
         </div>
 
         <div className="task-card__meta">
+          {/* Priority badge — only for urgent and high; color-coded + urgent pulses */}
+          {effPrio === 'urgent' && (
+            <span className="prio-badge urgent">
+              <Flame size={9} strokeWidth={2.5} /> Urgente
+            </span>
+          )}
+          {effPrio === 'high' && (
+            <span className="prio-badge high">
+              <ArrowUp size={9} strokeWidth={2.5} /> Alta
+            </span>
+          )}
           {due && (
             <span className={`task-card__due${rel.state === 'overdue' ? ' is-overdue' : rel.state === 'soon' ? ' is-soon' : ''}`}>
               <Clock size={12} />
