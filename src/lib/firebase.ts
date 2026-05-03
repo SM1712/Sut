@@ -149,6 +149,22 @@ export const uploadAudio = async (
   return getDownloadURL(sRef);
 };
 
+export const uploadImage = async (
+  file: File,
+  uid: string,
+  spaceId: string | null,
+  imageId: string,
+): Promise<string> => {
+  const storage = getStorageBucket();
+  const ext = file.type.includes('png') ? 'png' : file.type.includes('gif') ? 'gif' : file.type.includes('webp') ? 'webp' : 'jpg';
+  const path = spaceId
+    ? `spaces/${spaceId}/images/${imageId}.${ext}`
+    : `users/${uid}/images/${imageId}.${ext}`;
+  const sRef = storageRef(storage, path);
+  await uploadBytes(sRef, file, { contentType: file.type || 'image/jpeg' });
+  return getDownloadURL(sRef);
+};
+
 /**
  * Subscribe to a collection in real-time. Returns an unsubscribe function.
  * Fires immediately with current data, then on every remote change.

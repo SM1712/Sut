@@ -15,10 +15,12 @@ body {
   min-height: 100dvh;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  overflow-x: hidden;
 }
 
-#root { min-height: 100dvh; display: flex; flex-direction: column; }
+#root { min-height: 100dvh; display: flex; flex-direction: column; overflow-x: hidden; }
+
+/* Desktop: bloquea scroll del body cuando hay modal abierto */
+body.modal-open { overflow: hidden; }
 
 /* ── Scrollbars ── */
 ::-webkit-scrollbar { width: 5px; height: 5px; }

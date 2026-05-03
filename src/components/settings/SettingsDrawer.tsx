@@ -2,66 +2,109 @@ import { useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   X, Sun, Moon, Monitor, Palette,
-  Download, Upload, Trash2, Bell, BellOff, Check,
+  Bell, BellOff, Check,
+  User, LogIn, LogOut, Wifi,
+  Database, Download, Upload, Trash2,
+  Settings,
 } from 'lucide-react';
 import { useStore } from '../../store';
 import ColorPicker from '../ui/ColorPicker';
 import { useToast } from '../ui/Toast';
 import { useConfirm } from '../ui/Confirm';
+import { useIsSmall } from '../../hooks/useMediaQuery';
+import { loginWithGoogle, logoutFirebase } from '../../store/sync';
 import { ACCENT_COLORS, FONT_OPTIONS } from '../../lib/constants';
 import type { Theme } from '../../types';
 
 interface Props { open: boolean; onClose: () => void; }
 
-const THEMES: { value: Theme; label: string; Icon: typeof Sun }[] = [
-  { value: 'light',  label: 'Claro',   Icon: Sun },
-  { value: 'dark',   label: 'Oscuro',  Icon: Moon },
-  { value: 'system', label: 'Sistema', Icon: Monitor },
+type Section = 'appearance' | 'notifications' | 'account' | 'data';
+
+const SECTIONS: { id: Section; label: string; icon: typeof Palette }[] = [
+  { id: 'appearance',    label: 'Apariencia',     icon: Palette },
+  { id: 'notifications', label: 'Notificaciones',  icon: Bell },
+  { id: 'account',       label: 'Cuenta',          icon: User },
+  { id: 'data',          label: 'Datos',            icon: Database },
 ];
 
-type Section = 'appearance' | 'data' | 'notifications';
+const THEMES: { value: Theme; label: string; icon: typeof Sun }[] = [
+  { value: 'light',  label: 'Claro',   icon: Sun },
+  { value: 'dark',   label: 'Oscuro',  icon: Moon },
+  { value: 'system', label: 'Sistema', icon: Monitor },
+];
+
+/* ── Section heading ──────────────────────────────────── */
+function SectionHeading({ title, sub }: { title: string; sub?: string }) {
+  return (
+    <div className="cfg-heading">
+      <h3 className="cfg-heading__title">{title}</h3>
+      {sub && <p className="cfg-heading__sub">{sub}</p>}
+    </div>
+  );
+}
+
+/* ── Row wrapper ──────────────────────────────────────── */
+function CfgRow({ label, sub, children }: { label: string; sub?: string; children: React.ReactNode }) {
+  return (
+    <div className="cfg-row">
+      <div className="cfg-row__label">
+        <span className="cfg-row__name">{label}</span>
+        {sub && <span className="cfg-row__sub">{sub}</span>}
+      </div>
+      <div className="cfg-row__control">{children}</div>
+    </div>
+  );
+}
 
 export default function SettingsDrawer({ open, onClose }: Props) {
-  const settings    = useStore(s => s.settings);
-  const setSetting  = useStore(s => s.setSetting);
-  const exportData  = useStore(s => s.exportData);
-  const importData  = useStore(s => s.importData);
-  const reset       = useStore(s => s.reset);
-  const { toast }   = useToast();
-  const { confirm } = useConfirm();
+  const settings   = useStore(s => s.settings);
+  const setSetting = useStore(s => s.setSetting);
+  const meta       = useStore(s => s.meta);
+  const exportData = useStore(s => s.exportData);
+  const importData = useStore(s => s.importData);
+  const reset      = useStore(s => s.reset);
+  const { toast }  = useToast();
+  const { confirm }= useConfirm();
+  const isSmall    = useIsSmall();
 
   const [section, setSection] = useState<Section>('appearance');
   const [notifStatus, setNotifStatus] = useState<NotificationPermission | 'unsupported'>(
     'Notification' in window ? Notification.permission : 'unsupported'
   );
 
-  /* ── Data management ── */
+  /* ── Auth ── */
+  const handleLogin = async () => {
+    try { await loginWithGoogle(); toast('Sesión iniciada ✓', { type: 'success' }); }
+    catch { toast('Error al iniciar sesión', { type: 'danger' }); }
+  };
+  const handleLogout = async () => {
+    await logoutFirebase();
+    useStore.getState().clearAuth();
+    toast('Sesión cerrada', { type: 'info' });
+  };
+
+  /* ── Data ── */
   const handleExport = () => {
-    const json = exportData();
-    const blob = new Blob([json], { type: 'application/json' });
+    const blob = new Blob([exportData()], { type: 'application/json' });
     const url  = URL.createObjectURL(blob);
-    const a    = document.createElement('a');
-    a.href = url;
-    a.download = `sut-backup-${new Date().toISOString().slice(0, 10)}.json`;
+    const a    = Object.assign(document.createElement('a'), {
+      href: url,
+      download: `sut-backup-${new Date().toISOString().slice(0, 10)}.json`,
+    });
     a.click();
     URL.revokeObjectURL(url);
-    toast('Datos exportados correctamente', { type: 'success' });
+    toast('Backup descargado', { type: 'success' });
   };
 
   const handleImport = () => {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = '.json,application/json';
+    const input = Object.assign(document.createElement('input'), {
+      type: 'file', accept: '.json,application/json',
+    });
     input.onchange = async () => {
       const file = input.files?.[0];
       if (!file) return;
-      try {
-        const text = await file.text();
-        importData(text);
-        toast('Datos importados correctamente ✓', { type: 'success' });
-      } catch {
-        toast('Archivo inválido — usa un backup de SUT', { type: 'danger' });
-      }
+      try { importData(await file.text()); toast('Datos restaurados ✓', { type: 'success' }); }
+      catch { toast('Archivo inválido', { type: 'danger' }); }
     };
     input.click();
   };
@@ -69,289 +112,338 @@ export default function SettingsDrawer({ open, onClose }: Props) {
   const handleReset = async () => {
     const ok = await confirm({
       title: '¿Eliminar todos los datos?',
-      text: 'Se borrarán todas las tareas, cursos, etiquetas y eventos. Esta acción no se puede deshacer.',
+      text: 'Tareas, cursos, etiquetas y eventos. No se puede deshacer.',
       confirmText: 'Eliminar todo',
     });
     if (!ok) return;
-    reset();
-    toast('Datos eliminados', { type: 'warn' });
-    onClose();
+    reset(); toast('Datos eliminados', { type: 'warn' }); onClose();
   };
 
   /* ── Notifications ── */
-  const requestNotifications = async () => {
-    if (!('Notification' in window)) return;
-    const result = await Notification.requestPermission();
-    setNotifStatus(result);
-    if (result === 'granted') {
+  const requestNotif = async () => {
+    const r = await Notification.requestPermission();
+    setNotifStatus(r);
+    if (r === 'granted') {
+      new Notification('SUT', { body: 'Notificaciones activas.', icon: '/assets/icon.svg' });
       toast('Notificaciones activadas ✓', { type: 'success' });
-      // Send a test notification
-      new Notification('SUT — Notificaciones activas', {
-        body: 'Recibirás recordatorios de tus tareas.',
-        icon: '/assets/icon.svg',
-      });
-    } else {
-      toast('Notificaciones bloqueadas en el navegador', { type: 'warn' });
-    }
+    } else toast('Bloqueadas en el navegador', { type: 'warn' });
   };
 
-  const SECTIONS: { id: Section; label: string }[] = [
-    { id: 'appearance',    label: '🎨 Apariencia' },
-    { id: 'notifications', label: '🔔 Avisos' },
-    { id: 'data',          label: '💾 Datos' },
-  ];
+  /* ── Animations ── */
+  const variants = isSmall
+    ? { initial: { y: '100%' }, animate: { y: 0 }, exit: { y: '100%' } }
+    : { initial: { opacity: 0, scale: 0.97, y: 12 }, animate: { opacity: 1, scale: 1, y: 0 }, exit: { opacity: 0, scale: 0.97, y: 12 } };
+
+  /* ── Section content ── */
+  const renderContent = () => {
+    switch (section) {
+
+      /* ── APARIENCIA ────────────────────────────────── */
+      case 'appearance': return (
+        <>
+          <SectionHeading title="Tema" sub="Selecciona cómo se ve la interfaz." />
+          <div className="theme-selector">
+            {THEMES.map(({ value, label, icon: Icon }) => (
+              <button
+                key={value}
+                className={`theme-card${settings.theme === value ? ' is-active' : ''}`}
+                onClick={() => setSetting('theme', value)}
+              >
+                <Icon size={20} />
+                <span>{label}</span>
+              </button>
+            ))}
+          </div>
+
+          <div className="cfg-divider" />
+
+          <SectionHeading title="Color de acento" sub="Personaliza el color principal de la interfaz." />
+          <ColorPicker
+            colors={ACCENT_COLORS}
+            value={settings.accentColor}
+            onChange={c => { setSetting('accentColor', c); setSetting('buttonColor', c); }}
+          />
+
+          <div className="cfg-divider" />
+
+          <SectionHeading title="Tipografía" />
+          <div className="font-grid">
+            {FONT_OPTIONS.map(({ value, label }) => (
+              <button
+                key={value}
+                className={`font-card${settings.fontFamily === value ? ' is-active' : ''}`}
+                onClick={() => setSetting('fontFamily', value)}
+                style={{ fontFamily: value === 'system-ui' ? 'system-ui' : `'${value}', system-ui` }}
+              >
+                <span className="font-card__sample">Aa</span>
+                <span className="font-card__name">{label}</span>
+              </button>
+            ))}
+          </div>
+
+          <div className="cfg-divider" />
+
+          <SectionHeading title="Ajustes visuales" />
+          <div className="cfg-sliders">
+            <CfgRow
+              label="Tamaño de texto"
+              sub="Afecta a toda la interfaz"
+            >
+              <div className="slider-group">
+                <input type="range" className="scale-slider"
+                  min={0.85} max={1.3} step={0.05}
+                  value={settings.fontScale}
+                  onChange={e => setSetting('fontScale', Number(e.target.value))} />
+                <span className="slider-badge">{Math.round(settings.fontScale * 100)}%</span>
+              </div>
+            </CfgRow>
+
+            <CfgRow
+              label="Radio de bordes"
+              sub="De cuadrado a redondeado"
+            >
+              <div className="slider-group">
+                <input type="range" className="scale-slider"
+                  min={4} max={24} step={2}
+                  value={settings.radius}
+                  onChange={e => setSetting('radius', Number(e.target.value))} />
+                <span className="slider-badge">{settings.radius}px</span>
+              </div>
+            </CfgRow>
+          </div>
+
+          <div className="cfg-divider" />
+
+          <SectionHeading title="Vista previa" />
+          <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <div style={{ fontWeight: 600 }}>Cálculo II — Parcial</div>
+            <div style={{ display: 'flex', gap: 6 }}>
+              <span className="course-pill" style={{ '--c': 'var(--accent)' } as React.CSSProperties}>Cálculo II</span>
+              <span className="prio-badge high">Alta</span>
+            </div>
+            <div style={{ fontSize: '0.8125rem', color: 'var(--text-mute)' }}>Mañana · 14:00</div>
+            <button className="btn btn--primary btn--sm" style={{ alignSelf: 'flex-start', marginTop: 4 }}>
+              + Nueva tarea
+            </button>
+          </div>
+        </>
+      );
+
+      /* ── NOTIFICACIONES ────────────────────────────── */
+      case 'notifications': return (
+        <>
+          <SectionHeading
+            title="Recordatorios"
+            sub="Recibe avisos antes de que venza una tarea."
+          />
+
+          <div className={`notif-card notif-card--${notifStatus === 'granted' ? 'ok' : notifStatus === 'denied' ? 'err' : 'idle'}`}>
+            <div className="notif-card__icon">
+              {notifStatus === 'granted' ? <Bell size={18} /> : notifStatus === 'denied' ? <BellOff size={18} /> : <Bell size={18} />}
+            </div>
+            <div className="notif-card__body">
+              <strong>
+                {notifStatus === 'granted' ? 'Activas' : notifStatus === 'denied' ? 'Bloqueadas' : notifStatus === 'unsupported' ? 'No disponible' : 'Desactivadas'}
+              </strong>
+              <span>
+                {notifStatus === 'granted' ? 'Recibirás avisos puntualmente.'
+                  : notifStatus === 'denied' ? 'Ve a Ajustes del sitio → Permisos → Permitir.'
+                  : notifStatus === 'unsupported' ? 'Tu navegador no lo soporta.'
+                  : 'Actívalas para no perderte nada.'}
+              </span>
+            </div>
+            {notifStatus === 'granted' && <Check size={16} className="notif-card__check" />}
+          </div>
+
+          {notifStatus === 'default' && (
+            <button className="btn btn--primary btn--sm" style={{ alignSelf: 'flex-start' }} onClick={requestNotif}>
+              <Bell size={15} /> Activar notificaciones
+            </button>
+          )}
+
+          <div className="cfg-divider" />
+
+          <SectionHeading title="Cómo funcionan" />
+          <ol className="cfg-steps">
+            {['Activa los permisos arriba.',
+              'Al crear una tarea, elige cuánto antes quieres el aviso: 15 min, 30 min, 1 h o 1 día.',
+              'SUT enviará la notificación automáticamente.',
+            ].map((s, i) => (
+              <li key={i} className="cfg-step">
+                <span className="cfg-step__num">{i + 1}</span>
+                <span>{s}</span>
+              </li>
+            ))}
+          </ol>
+        </>
+      );
+
+      /* ── CUENTA ────────────────────────────────────── */
+      case 'account': return (
+        <>
+          {meta.uid ? (
+            <>
+              <SectionHeading title="Sesión activa" />
+              <div className="account-card">
+                <div className="account-card__avatar">
+                  {(meta.email || 'U')[0].toUpperCase()}
+                </div>
+                <div className="account-card__info">
+                  <strong className="account-card__name">{meta.email?.split('@')[0]}</strong>
+                  <span className="account-card__email">{meta.email}</span>
+                </div>
+                <div className="account-card__badge">
+                  <Wifi size={12} />
+                  <span>Sync activo</span>
+                </div>
+              </div>
+
+              {meta.spaceId && (
+                <>
+                  <div className="cfg-divider" />
+                  <SectionHeading title="Espacio compartido" />
+                  <div className="space-badge">
+                    <span className="space-badge__dot" />
+                    <span style={{ flex: 1 }}>{meta.spaceName || 'Espacio'}</span>
+                    <code className="space-badge__code">{meta.spaceId}</code>
+                  </div>
+                </>
+              )}
+
+              <div className="cfg-divider" />
+              <button className="btn btn--secondary btn--sm" style={{ alignSelf: 'flex-start' }} onClick={handleLogout}>
+                <LogOut size={15} /> Cerrar sesión
+              </button>
+            </>
+          ) : (
+            <>
+              <SectionHeading
+                title="Sin cuenta"
+                sub="Inicia sesión con Google para sincronizar tus datos entre dispositivos."
+              />
+              <ul className="cfg-benefits">
+                {['Sync en tiempo real entre dispositivos', 'Tus datos seguros en la nube', 'Colabora en espacios compartidos'].map(b => (
+                  <li key={b} className="cfg-benefit">
+                    <Check size={14} />
+                    <span>{b}</span>
+                  </li>
+                ))}
+              </ul>
+              <button className="btn btn--primary btn--sm" style={{ alignSelf: 'flex-start' }} onClick={handleLogin}>
+                <LogIn size={15} /> Iniciar sesión con Google
+              </button>
+              <p style={{ fontSize: '0.8125rem', color: 'var(--text-faint)', lineHeight: 1.5, marginTop: 4 }}>
+                Tus datos actuales se conservan en este dispositivo.
+              </p>
+            </>
+          )}
+        </>
+      );
+
+      /* ── DATOS ─────────────────────────────────────── */
+      case 'data': return (
+        <>
+          <SectionHeading
+            title="Exportar"
+            sub="Descarga una copia de todos tus datos en formato JSON."
+          />
+          <button className="btn btn--secondary btn--sm" style={{ alignSelf: 'flex-start' }} onClick={handleExport}>
+            <Download size={15} /> Descargar backup
+          </button>
+
+          <div className="cfg-divider" />
+
+          <SectionHeading
+            title="Importar"
+            sub="Restaura un backup previo de SUT. Reemplaza los datos actuales."
+          />
+          <button className="btn btn--secondary btn--sm" style={{ alignSelf: 'flex-start' }} onClick={handleImport}>
+            <Upload size={15} /> Cargar backup
+          </button>
+
+          <div className="cfg-divider cfg-divider--danger" />
+
+          <SectionHeading
+            title="Zona de peligro"
+            sub="Esta acción es irreversible. Todos tus datos locales serán eliminados permanentemente."
+          />
+          <button className="btn btn--danger btn--sm" style={{ alignSelf: 'flex-start' }} onClick={handleReset}>
+            <Trash2 size={15} /> Eliminar todos los datos
+          </button>
+
+          <p style={{ fontSize: '0.75rem', color: 'var(--text-faint)', lineHeight: 1.5, marginTop: 4 }}>
+            SUT v2.0 · Hecho para estudiantes
+          </p>
+        </>
+      );
+    }
+  };
 
   return (
     <AnimatePresence>
       {open && (
-        <>
-          <motion.div
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            style={{ position: 'fixed', inset: 0, background: 'var(--backdrop)', zIndex: 'calc(var(--z-drawer) - 1)' }}
-            onClick={onClose}
-          />
+        <motion.div
+          className={`settings-overlay${isSmall ? ' is-sheet' : ''}`}
+          initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+          transition={{ duration: 0.16 }}
+          onClick={onClose}
+        >
           <motion.aside
-            className="settings-drawer"
-            initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }}
-            transition={{ type: 'spring', damping: 28, stiffness: 340 }}
+            className={`settings-popup${isSmall ? ' is-sheet' : ''}`}
+            variants={variants}
+            initial="initial" animate="animate" exit="exit"
+            transition={{ type: 'spring', damping: 30, stiffness: 370 }}
+            onClick={e => e.stopPropagation()}
           >
-            <div className="settings-drawer__header">
-              <span className="settings-drawer__title">
-                <Palette size={16} style={{ display: 'inline', marginRight: 6 }} />
-                Ajustes
+            {/* Mobile grab handle */}
+            {isSmall && (
+              <div className="settings-popup__handle-row">
+                <span className="settings-popup__handle" />
+              </div>
+            )}
+
+            {/* Header */}
+            <div className="settings-popup__header">
+              <span className="settings-popup__title">
+                <Settings size={15} />
+                Configuración
               </span>
-              <button className="icon-btn" onClick={onClose}><X size={18} /></button>
+              <button className="icon-btn" onClick={onClose} aria-label="Cerrar"><X size={18} /></button>
             </div>
 
-            {/* Section tabs */}
-            <div style={{
-              display: 'flex', gap: 3,
-              background: 'var(--bg-soft)', padding: 3,
-              borderRadius: 'var(--radius-sm)',
-              margin: '0 var(--sp-4) var(--sp-2)',
-            }}>
-              {SECTIONS.map(s => (
-                <button
-                  key={s.id}
-                  className={`cal-view-tab${section === s.id ? ' is-active' : ''}`}
-                  style={{ flex: 1, fontSize: '0.75rem' }}
-                  onClick={() => setSection(s.id)}
-                >
-                  {s.label}
-                </button>
-              ))}
-            </div>
-
-            <div className="settings-drawer__body">
-
-              {/* ── APPEARANCE ── */}
-              {section === 'appearance' && (
-                <>
-                  <div className="settings-section">
-                    <span className="settings-section__title">Tema</span>
-                    <div className="theme-tabs">
-                      {THEMES.map(({ value, label, Icon }) => (
-                        <button
-                          key={value}
-                          className={`theme-tab${settings.theme === value ? ' is-active' : ''}`}
-                          onClick={() => setSetting('theme', value)}
-                        >
-                          <Icon size={14} style={{ display: 'inline', marginRight: 4 }} />
-                          {label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="settings-section">
-                    <span className="settings-section__title">Color de acento</span>
-                    <ColorPicker
-                      colors={ACCENT_COLORS}
-                      value={settings.accentColor}
-                      onChange={c => { setSetting('accentColor', c); setSetting('buttonColor', c); }}
-                    />
-                  </div>
-
-                  <div className="settings-section">
-                    <span className="settings-section__title">Tipografía</span>
-                    <div className="font-list">
-                      {FONT_OPTIONS.map(({ value, label }) => (
-                        <button
-                          key={value}
-                          className={`font-option${settings.fontFamily === value ? ' is-active' : ''}`}
-                          onClick={() => setSetting('fontFamily', value)}
-                          style={{ fontFamily: value === 'system-ui' ? 'system-ui' : `'${value}', system-ui` }}
-                        >
-                          <span className="font-option__name">{label}</span>
-                          <span className="font-option__sample">Aa</span>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="settings-section">
-                    <span className="settings-section__title">
-                      Tamaño de texto — {Math.round(settings.fontScale * 100)}%
-                    </span>
-                    <input
-                      type="range" className="scale-slider"
-                      min={0.85} max={1.3} step={0.05}
-                      value={settings.fontScale}
-                      onChange={e => setSetting('fontScale', Number(e.target.value))}
-                    />
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: 'var(--text-faint)' }}>
-                      <span>85%</span><span>100%</span><span>130%</span>
-                    </div>
-                  </div>
-
-                  <div className="settings-section">
-                    <span className="settings-section__title">
-                      Radio de bordes — {settings.radius}px
-                    </span>
-                    <input
-                      type="range" className="scale-slider"
-                      min={4} max={24} step={2}
-                      value={settings.radius}
-                      onChange={e => setSetting('radius', Number(e.target.value))}
-                    />
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: 'var(--text-faint)' }}>
-                      <span>Cuadrado</span><span>Redondeado</span>
-                    </div>
-                  </div>
-
-                  {/* Preview */}
-                  <div className="settings-section">
-                    <span className="settings-section__title">Vista previa</span>
-                    <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                      <div style={{ fontWeight: 600, fontSize: '0.9375rem' }}>Cálculo II — Parcial</div>
-                      <div style={{ display: 'flex', gap: 6 }}>
-                        <span className="course-pill" style={{ '--c': 'var(--accent)' } as React.CSSProperties}>Cálculo II</span>
-                        <span className="prio-badge high">Alta</span>
-                      </div>
-                      <div style={{ fontSize: '0.8125rem', color: 'var(--text-mute)' }}>Mañana · 14:00</div>
-                    </div>
-                  </div>
-                </>
+            {/* Body: two-panel on desktop, tabs on mobile */}
+            <div className="settings-layout">
+              {/* Side nav (desktop) / Horizontal tabs (mobile) */}
+              {isSmall ? (
+                <div className="settings-tabs">
+                  {SECTIONS.map(({ id, label, icon: Icon }) => (
+                    <button key={id}
+                      className={`settings-tab${section === id ? ' is-active' : ''}`}
+                      onClick={() => setSection(id)}>
+                      <Icon size={13} /><span>{label}</span>
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <nav className="settings-sidenav">
+                  {SECTIONS.map(({ id, label, icon: Icon }) => (
+                    <button key={id}
+                      className={`settings-sidenav-item${section === id ? ' is-active' : ''}`}
+                      onClick={() => setSection(id)}>
+                      <Icon size={16} />
+                      <span>{label}</span>
+                    </button>
+                  ))}
+                </nav>
               )}
 
-              {/* ── NOTIFICATIONS ── */}
-              {section === 'notifications' && (
-                <>
-                  <div className="settings-section">
-                    <span className="settings-section__title">Recordatorios de tareas</span>
-                    <div style={{
-                      padding: 'var(--sp-4)',
-                      background: 'var(--surface-2)',
-                      borderRadius: 'var(--radius)',
-                      border: '1px solid var(--border)',
-                      display: 'flex', flexDirection: 'column', gap: 'var(--sp-3)',
-                    }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--sp-3)' }}>
-                        {notifStatus === 'granted'
-                          ? <Bell size={20} style={{ color: 'var(--success)' }} />
-                          : notifStatus === 'denied'
-                          ? <BellOff size={20} style={{ color: 'var(--danger)' }} />
-                          : <Bell size={20} style={{ color: 'var(--text-mute)' }} />
-                        }
-                        <div>
-                          <div style={{ fontWeight: 600, fontSize: '0.875rem' }}>
-                            {notifStatus === 'granted' ? 'Notificaciones activadas' :
-                             notifStatus === 'denied' ? 'Notificaciones bloqueadas' :
-                             notifStatus === 'unsupported' ? 'No disponible' :
-                             'Notificaciones desactivadas'}
-                          </div>
-                          <div style={{ fontSize: '0.8125rem', color: 'var(--text-mute)' }}>
-                            {notifStatus === 'granted' ? 'Recibirás avisos antes de cada tarea.' :
-                             notifStatus === 'denied' ? 'Permiso bloqueado. Actívalo en la configuración del navegador.' :
-                             notifStatus === 'unsupported' ? 'Tu navegador no soporta notificaciones.' :
-                             'Actívalas para recibir recordatorios.'}
-                          </div>
-                        </div>
-                      </div>
-                      {notifStatus === 'granted' && (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--sp-2)', color: 'var(--success)', fontSize: '0.875rem' }}>
-                          <Check size={14} /> Todo listo. Los recordatorios se enviarán según la configuración de cada tarea.
-                        </div>
-                      )}
-                      {(notifStatus === 'default') && (
-                        <button className="btn btn--primary btn--sm" onClick={requestNotifications}>
-                          <Bell size={15} /> Activar notificaciones
-                        </button>
-                      )}
-                      {notifStatus === 'denied' && (
-                        <p style={{ fontSize: '0.8125rem', color: 'var(--text-mute)', lineHeight: 1.5 }}>
-                          Para activarlas: abre la configuración del sitio en tu navegador → Permisos → Notificaciones → Permitir.
-                        </p>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="settings-section">
-                    <span className="settings-section__title">Cómo funciona</span>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--sp-3)' }}>
-                      {[
-                        { step: '1', text: 'Activa las notificaciones arriba.' },
-                        { step: '2', text: 'Al crear o editar una tarea, selecciona un recordatorio (15 min, 30 min, 1 hora o 1 día antes).' },
-                        { step: '3', text: 'SUT te avisará automáticamente cuando se acerque la fecha.' },
-                      ].map(({ step, text }) => (
-                        <div key={step} style={{ display: 'flex', gap: 'var(--sp-3)', fontSize: '0.875rem', color: 'var(--text-soft)' }}>
-                          <span style={{
-                            width: 22, height: 22, borderRadius: '50%',
-                            background: 'var(--accent)', color: '#fff',
-                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            fontSize: '0.75rem', fontWeight: 700, flexShrink: 0,
-                          }}>{step}</span>
-                          <span style={{ lineHeight: 1.5 }}>{text}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </>
-              )}
-
-              {/* ── DATA ── */}
-              {section === 'data' && (
-                <>
-                  <div className="settings-section">
-                    <span className="settings-section__title">Exportar datos</span>
-                    <p style={{ fontSize: '0.8125rem', color: 'var(--text-mute)', marginBottom: 'var(--sp-3)', lineHeight: 1.5 }}>
-                      Descarga un archivo JSON con todas tus tareas, cursos, etiquetas y eventos. Úsalo como respaldo o para migrar a otro dispositivo.
-                    </p>
-                    <button className="btn btn--secondary btn--sm" onClick={handleExport}>
-                      <Download size={15} /> Exportar backup
-                    </button>
-                  </div>
-
-                  <div className="settings-section">
-                    <span className="settings-section__title">Importar datos</span>
-                    <p style={{ fontSize: '0.8125rem', color: 'var(--text-mute)', marginBottom: 'var(--sp-3)', lineHeight: 1.5 }}>
-                      Restaura un backup previo de SUT. Los datos actuales serán reemplazados.
-                    </p>
-                    <button className="btn btn--secondary btn--sm" onClick={handleImport}>
-                      <Upload size={15} /> Importar backup
-                    </button>
-                  </div>
-
-                  <div className="settings-section" style={{ borderTop: '1px solid var(--border)', paddingTop: 'var(--sp-4)' }}>
-                    <span className="settings-section__title" style={{ color: 'var(--danger)' }}>Zona de peligro</span>
-                    <p style={{ fontSize: '0.8125rem', color: 'var(--text-mute)', marginBottom: 'var(--sp-3)', lineHeight: 1.5 }}>
-                      Elimina permanentemente todos tus datos locales. Esta acción no se puede deshacer.
-                    </p>
-                    <button className="btn btn--danger btn--sm" onClick={handleReset}>
-                      <Trash2 size={15} /> Eliminar todos los datos
-                    </button>
-                  </div>
-
-                  <div className="settings-section">
-                    <div style={{ fontSize: '0.75rem', color: 'var(--text-faint)', lineHeight: 1.6, textAlign: 'center' }}>
-                      SUT v2.0 · Hecho con ❤️ para estudiantes
-                    </div>
-                  </div>
-                </>
-              )}
+              {/* Content */}
+              <div className="settings-content">
+                {renderContent()}
+              </div>
             </div>
           </motion.aside>
-        </>
+        </motion.div>
       )}
     </AnimatePresence>
   );

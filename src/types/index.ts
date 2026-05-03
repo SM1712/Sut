@@ -21,6 +21,7 @@ export interface Task {
   notified: Record<string, boolean>;
   createdBy?: string | null;
   audioUrl?: string | null;
+  imageUrls?: string[];
 }
 
 export interface Course {

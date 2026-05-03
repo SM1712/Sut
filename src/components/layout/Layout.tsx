@@ -9,6 +9,7 @@ import GlobalSearch from '../search/GlobalSearch';
 import { ConfirmProvider } from '../ui/Confirm';
 import { useIsMobile } from '../../hooks/useMediaQuery';
 import { useTheme } from '../../hooks/useTheme';
+import CelebrationManager from '../tasks/CelebrationManager';
 
 interface Props { children: ReactNode }
 
@@ -45,12 +46,11 @@ export default function Layout({ children }: Props) {
         <div className="main-content">
           <TopBar
             onMenuToggle={() => setSidebarOpen(o => !o)}
-            onSettings={() => setSettingsOpen(true)}
             onAccount={() => setAccountOpen(o => !o)}
             onSearch={() => setSearchOpen(true)}
             onNewTask={handleNewTask}
           />
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+          <div className="content-area">
             {children}
           </div>
         </div>
@@ -66,6 +66,7 @@ export default function Layout({ children }: Props) {
         <SettingsDrawer open={settingsOpen} onClose={() => setSettingsOpen(false)} />
         <AccountPanel open={accountOpen} onClose={() => setAccountOpen(false)} />
         <GlobalSearch open={searchOpen} onClose={() => setSearchOpen(false)} />
+        <CelebrationManager />
       </div>
     </ConfirmProvider>
   );

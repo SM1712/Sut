@@ -222,6 +222,7 @@ export const useStore = create<Store>()(
           notified: {},
           createdBy: get().meta.email || get().meta.uid,
           audioUrl: task.audioUrl || null,
+          imageUrls: task.imageUrls || [],
         };
         set({ tasks: [newTask, ...tasks] });
         _sync('set', 'tasks', newTask as unknown as Record<string, unknown>);

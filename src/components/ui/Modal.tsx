@@ -20,10 +20,10 @@ export default function Modal({ open, onClose, title, children, footer, wide, fo
     if (!open) return;
     const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
     document.addEventListener('keydown', handler);
-    document.body.style.overflow = 'hidden';
+    document.body.classList.add('modal-open');
     return () => {
       document.removeEventListener('keydown', handler);
-      document.body.style.overflow = '';
+      document.body.classList.remove('modal-open');
     };
   }, [open, onClose]);
 
