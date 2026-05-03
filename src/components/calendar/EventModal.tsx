@@ -25,8 +25,8 @@ export default function EventModal({ open, editId, prefillStart, prefillEnd, onC
 
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [type, setType] = useState<EventType>('exam');
-  const [color, setColor] = useState(EVENT_TYPES.exam.color);
+  const [type, setType] = useState<EventType>('custom');
+  const [color, setColor] = useState(EVENT_TYPES.custom.color);
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
 
@@ -42,7 +42,7 @@ export default function EventModal({ open, editId, prefillStart, prefillEnd, onC
     } else {
       const today = prefillStart || new Date().toISOString().slice(0, 10);
       setTitle(''); setDescription('');
-      setType('exam'); setColor(EVENT_TYPES.exam.color);
+      setType('custom'); setColor(EVENT_TYPES.custom.color);
       setStartDate(today); setEndDate(prefillEnd || today);
     }
   }, [open, editId, events, prefillStart, prefillEnd]);
@@ -54,7 +54,7 @@ export default function EventModal({ open, editId, prefillStart, prefillEnd, onC
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title.trim()) return;
+    if (!title.trim()) { toast('El título es requerido', { type: 'danger' }); return; }
     if (startDate > endDate) { toast('La fecha de inicio no puede ser mayor al fin', { type: 'danger' }); return; }
     upsertEvent({ id: editId || undefined, title: title.trim(), description, type, color, startDate, endDate, allDay: true });
     toast(editId ? 'Evento actualizado' : 'Evento creado 🗓', { type: 'success' });

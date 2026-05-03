@@ -226,7 +226,7 @@ export default function TaskModal({ open, editId, onClose }: Props) {
         <div className="toggle-row">
           <div>
             <div className="toggle-label">
-              <Zap size={14} style={{ display: 'inline', marginRight: 4, color: 'var(--warn)' }} />
+              <Zap size={14} style={{ color: 'var(--warn)', flexShrink: 0 }} />
               Prioridad escalante
             </div>
             <div className="toggle-sub">Se incrementa automáticamente al acercarse la fecha</div>

@@ -2,7 +2,7 @@ import { NavLink, useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   LayoutDashboard, CheckSquare, Calendar, BookOpen, Tag, TrendingUp,
-  Settings, LogIn, LogOut, Users, Download, Upload,
+  Wrench, Settings, LogIn, LogOut, Users, Download, Upload,
 } from 'lucide-react';
 import { useStore } from '../../store';
 import { loginWithGoogle, logoutFirebase } from '../../store/sync';
@@ -22,6 +22,7 @@ const NAV_ITEMS = [
   { to: '/courses',  icon: BookOpen,        label: 'Cursos' },
   { to: '/tags',     icon: Tag,             label: 'Etiquetas' },
   { to: '/stats',    icon: TrendingUp,      label: 'Estadísticas' },
+  { to: '/tools',    icon: Wrench,          label: 'Herramientas' },
 ];
 
 function SidebarContent({ onClose, onSettings }: { onClose: () => void; onSettings: () => void }) {
@@ -122,7 +123,7 @@ function SidebarContent({ onClose, onSettings }: { onClose: () => void; onSettin
             <Icon className="nav-item__icon" size={20} />
             <span className="nav-item__label">{label}</span>
             {label === 'Tareas' && pending > 0 && (
-              <span className="nav-item__badge">{pending > 99 ? '99+' : pending}</span>
+              <span className="nav-item__badge" />
             )}
           </NavLink>
         ))}

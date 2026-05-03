@@ -31,8 +31,16 @@ export default function WeekView({ weekStart, onTaskClick, onEventClick, onSlotC
 
   const days = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
 
-  const getTasksForDay = (day: Date): Task[] =>
+  const getTimedTasksForDay = (day: Date): Task[] =>
     tasks.filter(t => {
+      if (!t.dueTime) return false;
+      const due = parseDue(t.dueDate, t.dueTime);
+      return due && isSameDay(due, day);
+    });
+
+  const getAllDayTasksForDay = (day: Date): Task[] =>
+    tasks.filter(t => {
+      if (t.dueTime) return false;
       const due = parseDue(t.dueDate, t.dueTime);
       return due && isSameDay(due, day);
     });
@@ -44,6 +52,7 @@ export default function WeekView({ weekStart, onTaskClick, onEventClick, onSlotC
 
   // Position task block within time grid (60px per hour, starting from 6am)
   const taskTop = (t: Task) => {
+    if (!t.dueTime) return null; // no-time tasks go to all-day area
     const due = parseDue(t.dueDate, t.dueTime);
     if (!due) return null;
     const h = due.getHours(), m = due.getMinutes();
@@ -85,6 +94,22 @@ export default function WeekView({ weekStart, onTaskClick, onEventClick, onSlotC
                   </div>
                 );
               })}
+              {/* All-day tasks (no time set) */}
+              {getAllDayTasksForDay(d).map(t => {
+                const course = courses.find(c => c.id === t.courseId);
+                const color = course?.color || 'var(--accent)';
+                return (
+                  <div
+                    key={t.id}
+                    className="cal-event"
+                    style={{ '--ev-color': color, opacity: t.done ? 0.5 : 1 } as React.CSSProperties}
+                    onClick={() => onTaskClick(t.id)}
+                    title={t.title}
+                  >
+                    ✓ {t.title}
+                  </div>
+                );
+              })}
             </div>
           );
         })}
@@ -105,7 +130,7 @@ export default function WeekView({ weekStart, onTaskClick, onEventClick, onSlotC
         <div className="week-view__grid">
           {days.map((d, dayIdx) => {
             const isToday = isSameDay(d, today);
-            const dayTasks = getTasksForDay(d);
+            const dayTasks = getTimedTasksForDay(d);
             const nowPos = isToday ? nowTop() : null;
             const iso = d.toISOString().slice(0, 10);
 

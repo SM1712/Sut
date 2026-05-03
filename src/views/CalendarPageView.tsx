@@ -29,20 +29,24 @@ export default function CalendarPageView() {
   const prevPeriod = () => {
     setDirection(-1);
     setViewDate(d => {
-      const next = new Date(d);
-      if (calView === 'week') next.setDate(d.getDate() - 7);
-      else next.setMonth(d.getMonth() - 1);
-      return next;
+      if (calView === 'week') {
+        const next = new Date(d);
+        next.setDate(d.getDate() - 7);
+        return next;
+      }
+      return new Date(d.getFullYear(), d.getMonth() - 1, 1);
     });
   };
 
   const nextPeriod = () => {
     setDirection(1);
     setViewDate(d => {
-      const next = new Date(d);
-      if (calView === 'week') next.setDate(d.getDate() + 7);
-      else next.setMonth(d.getMonth() + 1);
-      return next;
+      if (calView === 'week') {
+        const next = new Date(d);
+        next.setDate(d.getDate() + 7);
+        return next;
+      }
+      return new Date(d.getFullYear(), d.getMonth() + 1, 1);
     });
   };
 
@@ -54,7 +58,7 @@ export default function CalendarPageView() {
   const openNewTask = () => { setEditTaskId(null); setTaskModalOpen(true); };
 
   const handleDayClick = (date: string) => openNewEvent(date, date);
-  const handleSlotClick = (date: string) => openNewEvent(date, date);
+  const handleSlotClick = (date: string, _hour?: number) => openNewEvent(date, date);
 
   const headerLabel = calView === 'week'
     ? (() => {
@@ -141,7 +145,7 @@ export default function CalendarPageView() {
 
       {activeView === 'agenda' && (
         <AgendaView
-          baseDate={new Date()}
+          baseDate={viewDate}
           onTaskClick={openTask}
           onEventClick={openEvent}
           daysAhead={60}

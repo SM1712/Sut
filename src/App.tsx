@@ -7,6 +7,9 @@ import CalendarPageView from './views/CalendarPageView';
 import CoursesView from './views/CoursesView';
 import TagsView from './views/TagsView';
 import StatsView from './views/StatsView';
+import ToolsView from './views/ToolsView';
+import PomodoroView from './views/PomodoroView';
+import PDFConverterView from './views/PDFConverterView';
 import { ToastProvider } from './components/ui/Toast';
 import { useReminders } from './hooks/useReminders';
 
@@ -23,6 +26,9 @@ function AppInner() {
           <Route path="/courses"   element={<CoursesView />} />
           <Route path="/tags"      element={<TagsView />} />
           <Route path="/stats"     element={<StatsView />} />
+          <Route path="/tools"           element={<ToolsView />} />
+          <Route path="/tools/pomodoro" element={<PomodoroView />} />
+          <Route path="/tools/pdf"      element={<PDFConverterView />} />
           <Route path="*"          element={<Navigate to="/" replace />} />
         </Routes>
       </AnimatePresence>

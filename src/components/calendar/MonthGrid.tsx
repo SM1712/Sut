@@ -194,37 +194,56 @@ export default function MonthGrid({ year, month, direction, onTaskClick, onEvent
           })}
         </div>
 
-        {/* Legend */}
-        {events.some(ev => {
-          const s = ev.startDate, e = ev.endDate || ev.startDate;
+        {/* Footer: stats + legend */}
+        {(() => {
           const mStart = new Date(year, month, 1).toISOString().slice(0, 10);
           const mEnd = new Date(year, month + 1, 0).toISOString().slice(0, 10);
-          return s <= mEnd && e >= mStart;
-        }) && (
-          <div className="cal-legend">
-            <span className="cal-legend__title">Este mes:</span>
-            {events
-              .filter(ev => {
-                const mStart = new Date(year, month, 1).toISOString().slice(0, 10);
-                const mEnd = new Date(year, month + 1, 0).toISOString().slice(0, 10);
-                return ev.startDate <= mEnd && (ev.endDate || ev.startDate) >= mStart;
-              })
-              .map(ev => {
-                const type = EVENT_TYPES[ev.type];
-                return (
-                  <span
-                    key={ev.id}
-                    className="cal-legend__chip"
-                    style={{ '--ev-color': ev.color || type.color } as React.CSSProperties}
-                    onClick={() => onEventClick(ev.id)}
-                    title={`${ev.startDate} → ${ev.endDate}`}
-                  >
-                    {ev.title}
+          const monthEvents = events.filter(ev => ev.startDate <= mEnd && (ev.endDate || ev.startDate) >= mStart);
+          const monthTasks = tasks.filter(t => {
+            const due = parseDue(t.dueDate, t.dueTime);
+            if (!due) return false;
+            const iso = `${due.getFullYear()}-${String(due.getMonth()+1).padStart(2,'0')}-${String(due.getDate()).padStart(2,'0')}`;
+            return iso >= mStart && iso <= mEnd;
+          });
+          const doneTasks = monthTasks.filter(t => t.done).length;
+          if (!monthEvents.length && !monthTasks.length) return null;
+          return (
+            <div className="cal-month-footer">
+              <div className="cal-month-stats">
+                {monthTasks.length > 0 && (
+                  <span className="cal-month-stat">
+                    <span className="cal-month-stat__val">{doneTasks}/{monthTasks.length}</span>
+                    {' '}tareas
                   </span>
-                );
-              })}
-          </div>
-        )}
+                )}
+                {monthEvents.length > 0 && (
+                  <span className="cal-month-stat">
+                    <span className="cal-month-stat__val">{monthEvents.length}</span>
+                    {' '}evento{monthEvents.length !== 1 ? 's' : ''}
+                  </span>
+                )}
+              </div>
+              {monthEvents.length > 0 && (
+                <div className="cal-legend">
+                  {monthEvents.map(ev => {
+                    const type = EVENT_TYPES[ev.type];
+                    return (
+                      <span
+                        key={ev.id}
+                        className="cal-legend__chip"
+                        style={{ '--ev-color': ev.color || type.color } as React.CSSProperties}
+                        onClick={() => onEventClick(ev.id)}
+                        title={`${ev.startDate}${ev.endDate && ev.endDate !== ev.startDate ? ` → ${ev.endDate}` : ''}`}
+                      >
+                        {type.emoji} {ev.title}
+                      </span>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          );
+        })()}
       </motion.div>
     </AnimatePresence>
   );

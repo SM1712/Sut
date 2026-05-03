@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, CheckSquare, Calendar, BookOpen, TrendingUp } from 'lucide-react';
+import { LayoutDashboard, CheckSquare, Calendar, BookOpen, TrendingUp, Wrench } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useStore } from '../../store';
 
@@ -9,6 +9,7 @@ const ITEMS = [
   { to: '/calendar', icon: Calendar,        label: 'Cal.' },
   { to: '/courses',  icon: BookOpen,        label: 'Cursos' },
   { to: '/stats',    icon: TrendingUp,      label: 'Stats' },
+  { to: '/tools',    icon: Wrench,          label: 'Tools' },
 ];
 
 export default function MobileNav() {
@@ -36,7 +37,7 @@ export default function MobileNav() {
                   )}
                   <Icon size={22} className="mobile-nav__icon" />
                   {label === 'Tareas' && pending > 0 && (
-                    <span className="mobile-nav__badge">{pending > 9 ? '9+' : pending}</span>
+                    <span className="mobile-nav__badge" />
                   )}
                 </div>
                 <span className="mobile-nav__label">{label}</span>

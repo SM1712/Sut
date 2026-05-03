@@ -51,15 +51,24 @@ export default function AgendaView({ baseDate, onTaskClick, onEventClick, daysAh
     );
   }
 
+  const todayIso = today.toISOString().slice(0, 10);
+
   return (
     <div className="agenda-view">
-      {groups.map(({ date, iso, tasks: dayTasks, events: dayEvents }) => {
+      {groups.map(({ date, iso, tasks: dayTasks, events: dayEvents }, idx) => {
         const isToday = isSameDay(date, today);
         const dayName = DAYS_LONG_ES[date.getDay()];
         const monthName = MONTHS_ES[date.getMonth()];
+        // Show a divider when we cross from past into future without a "today" group
+        const prev = groups[idx - 1];
+        const showFutureSep = prev && prev.iso < todayIso && iso > todayIso && !groups.some(g => g.iso === todayIso);
 
         return (
-          <div key={iso} className="agenda-group">
+          <div key={iso}>
+            {showFutureSep && (
+              <div className="agenda-future-sep">Próximos</div>
+            )}
+          <div className="agenda-group">
             {/* Date header */}
             <div className="agenda-date-header">
               <div style={{ display: 'flex', flexDirection: 'column', minWidth: 48 }}>
@@ -126,6 +135,7 @@ export default function AgendaView({ baseDate, onTaskClick, onEventClick, daysAh
                 </div>
               );
             })}
+          </div>
           </div>
         );
       })}
