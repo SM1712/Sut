@@ -1,57 +1,56 @@
 import { useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { TrendingUp, CheckCircle2, Flame, BookOpen, Target, Award } from 'lucide-react';
+import {
+  TrendingUp, CheckCircle2, Flame, BookOpen,
+  Target, Award, CalendarCheck, ListTodo, Zap,
+} from 'lucide-react';
 import { useStore } from '../store';
 import { computeEffectivePriority } from '../lib/utils';
+import { useIsSmall } from '../hooks/useMediaQuery';
 
-const container = { hidden: {}, show: { transition: { staggerChildren: 0.07 } } };
-const item      = { hidden: { opacity: 0, y: 14 }, show: { opacity: 1, y: 0, transition: { duration: 0.24 } } };
+/* ── Animation variants ── */
+const container = {
+  hidden: {},
+  show: { transition: { staggerChildren: 0.08 } },
+};
+const item = {
+  hidden: { opacity: 0, y: 18 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.35, type: 'spring', bounce: 0.25 } },
+};
+const fadeIn = {
+  hidden: { opacity: 0 },
+  show: { opacity: 1, transition: { duration: 0.4 } },
+};
 
-/* ── Helpers ── */
-
-/** Returns YYYY-MM-DD in the *local* timezone (not UTC). */
-function localDatestamp(d: Date): string {
+/* ── Date helpers ── */
+function localDatestamp(d: Date) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
-
-/** Extract YYYY-MM-DD from an ISO string already stored in UTC (completedAt). */
-function datestampFromISO(iso: string): string {
-  // Parse as local time to match the user's calendar date
-  const d = new Date(iso);
-  return localDatestamp(d);
-}
-
+function datestampFromISO(iso: string) { return localDatestamp(new Date(iso)); }
 function today() { return localDatestamp(new Date()); }
-
-function daysAgo(n: number) {
-  const d = new Date();
-  d.setDate(d.getDate() - n);
-  return localDatestamp(d);
-}
-
+function daysAgo(n: number) { const d = new Date(); d.setDate(d.getDate() - n); return localDatestamp(d); }
 function dayLabel(dateStr: string) {
-  const d = new Date(dateStr + 'T12:00:00');
-  return d.toLocaleDateString('es', { weekday: 'short' });
+  return new Date(dateStr + 'T12:00:00').toLocaleDateString('es', { weekday: 'short' });
 }
 
-/* ── Radial ring component ── */
-function RingProgress({ pct, size = 72, stroke = 7, color = 'var(--accent)' }: {
+/* ── Radial ring ── */
+function RingProgress({ pct, size = 96, stroke = 9, color = '#fff' }: {
   pct: number; size?: number; stroke?: number; color?: string;
 }) {
-  const r  = (size - stroke) / 2;
+  const r = (size - stroke) / 2;
   const cx = size / 2;
   const circum = 2 * Math.PI * r;
-  const dash   = circum * Math.min(pct, 100) / 100;
+  const dash = circum * Math.min(pct, 100) / 100;
   return (
     <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} style={{ flexShrink: 0 }}>
-      <circle cx={cx} cy={cx} r={r} fill="none" stroke="var(--border)" strokeWidth={stroke} />
-      <circle
+      <circle cx={cx} cy={cx} r={r} fill="none" stroke="rgba(255,255,255,0.18)" strokeWidth={stroke} />
+      <motion.circle
         cx={cx} cy={cx} r={r} fill="none"
-        stroke={color} strokeWidth={stroke}
-        strokeDasharray={`${dash} ${circum}`}
-        strokeLinecap="round"
+        stroke={color} strokeWidth={stroke} strokeLinecap="round"
         transform={`rotate(-90 ${cx} ${cx})`}
-        style={{ transition: 'stroke-dasharray 0.6s ease' }}
+        initial={{ strokeDasharray: `0 ${circum}` }}
+        animate={{ strokeDasharray: `${dash} ${circum}` }}
+        transition={{ duration: 1.4, ease: 'easeOut', delay: 0.3 }}
       />
     </svg>
   );
@@ -61,38 +60,67 @@ function RingProgress({ pct, size = 72, stroke = 7, color = 'var(--accent)' }: {
 function DayBar({ label, count, max, isToday }: { label: string; count: number; max: number; isToday: boolean }) {
   const pct = max > 0 ? (count / max) * 100 : 0;
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, flex: 1 }}>
-      <span style={{ fontSize: '0.75rem', fontWeight: 600, color: count > 0 ? 'var(--accent)' : 'var(--text-faint)' }}>
-        {count > 0 ? count : ''}
-      </span>
-      <div style={{ width: '100%', height: 80, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
-        <div style={{
-          width: '70%', height: `${Math.max(pct, count > 0 ? 6 : 0)}%`,
-          background: isToday ? 'var(--accent)' : 'color-mix(in srgb, var(--accent) 45%, transparent)',
-          borderRadius: '4px 4px 0 0',
-          transition: 'height 0.5s ease',
-          minHeight: count > 0 ? 6 : 0,
-        }} />
+    <div className="sv2-daybar">
+      <span className="sv2-daybar__count">{count > 0 ? count : ''}</span>
+      <div className="sv2-daybar__track">
+        <motion.div
+          className="sv2-daybar__fill"
+          initial={{ scaleY: 0 }}
+          animate={{ scaleY: 1 }}
+          style={{
+            height: `${Math.max(pct, count > 0 ? 8 : 0)}%`,
+            background: isToday
+              ? 'var(--accent)'
+              : 'color-mix(in srgb, var(--accent) 35%, transparent)',
+          }}
+          transition={{ duration: 0.7, type: 'spring', bounce: 0.35, delay: 0.1 }}
+        />
       </div>
-      <span style={{ fontSize: '0.6875rem', color: isToday ? 'var(--accent)' : 'var(--text-mute)', fontWeight: isToday ? 600 : 400 }}>
-        {label}
-      </span>
+      <span className={`sv2-daybar__label${isToday ? ' sv2-daybar__label--today' : ''}`}>{label}</span>
     </div>
   );
 }
 
+/* ── Mini radial for courses ── */
+function MiniRing({ pct, color }: { pct: number; color: string }) {
+  const size = 38; const stroke = 4;
+  const r = (size - stroke) / 2;
+  const cx = size / 2;
+  const circum = 2 * Math.PI * r;
+  const dash = circum * Math.min(pct, 100) / 100;
+  return (
+    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} style={{ flexShrink: 0 }}>
+      <circle cx={cx} cy={cx} r={r} fill="none" stroke="color-mix(in srgb, var(--border) 80%, transparent)" strokeWidth={stroke} />
+      <motion.circle
+        cx={cx} cy={cx} r={r} fill="none"
+        stroke={color} strokeWidth={stroke} strokeLinecap="round"
+        transform={`rotate(-90 ${cx} ${cx})`}
+        initial={{ strokeDasharray: `0 ${circum}` }}
+        whileInView={{ strokeDasharray: `${dash} ${circum}` }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.9, ease: 'easeOut' }}
+      />
+    </svg>
+  );
+}
+
+/* ══════════════════════════════════════════
+   MAIN COMPONENT
+══════════════════════════════════════════ */
 export default function StatsView() {
   const tasks   = useStore(s => s.tasks);
   const courses = useStore(s => s.courses);
+  const isSmall = useIsSmall();
 
-  /* ── Aggregations ── */
   const stats = useMemo(() => {
-    const total    = tasks.length;
-    const done     = tasks.filter(t => t.done).length;
-    const pending  = total - done;
-    const pct      = total > 0 ? Math.round((done / total) * 100) : 0;
+    const total   = tasks.length;
+    const done    = tasks.filter(t => t.done).length;
+    const pending = total - done;
+    const pct     = total > 0 ? Math.round((done / total) * 100) : 0;
 
-    // Weekly activity (last 7 days, including today)
+    const todayStr       = today();
+    const completedToday = tasks.filter(t => t.done && t.completedAt && datestampFromISO(t.completedAt) === todayStr).length;
+
     const weekDays = Array.from({ length: 7 }, (_, i) => daysAgo(6 - i));
     const weekCounts: Record<string, number> = {};
     weekDays.forEach(d => { weekCounts[d] = 0; });
@@ -102,121 +130,160 @@ export default function StatsView() {
         if (weekCounts[d] !== undefined) weekCounts[d]++;
       }
     });
-    const weekMax = Math.max(...Object.values(weekCounts), 1);
+    const weekMax   = Math.max(...Object.values(weekCounts), 1);
+    const weekTotal = Object.values(weekCounts).reduce((a, b) => a + b, 0);
 
-    // Streak: consecutive days (going backwards from today) with ≥1 completed task
     const completedDates = new Set(
       tasks.filter(t => t.done && t.completedAt).map(t => datestampFromISO(t.completedAt!))
     );
     let streak = 0;
     let cur = new Date();
-    // If nothing completed today, start from yesterday
-    if (!completedDates.has(localDatestamp(cur))) {
-      cur.setDate(cur.getDate() - 1);
-    }
-    while (completedDates.has(localDatestamp(cur))) {
-      streak++;
-      cur.setDate(cur.getDate() - 1);
-    }
+    if (!completedDates.has(localDatestamp(cur))) cur.setDate(cur.getDate() - 1);
+    while (completedDates.has(localDatestamp(cur))) { streak++; cur.setDate(cur.getDate() - 1); }
 
-    // Best day
-    const bestDay = Object.entries(weekCounts).sort((a, b) => b[1] - a[1])[0];
-
-    // By-course
     const byCourse = courses.map(c => {
-      const ctasks = tasks.filter(t => t.courseId === c.id);
-      const cdone  = ctasks.filter(t => t.done).length;
-      return { course: c, total: ctasks.length, done: cdone };
+      const ct = tasks.filter(t => t.courseId === c.id);
+      const cd = ct.filter(t => t.done).length;
+      return { course: c, total: ct.length, done: cd };
     }).filter(x => x.total > 0).sort((a, b) => b.total - a.total);
 
-    // Tasks without course
     const noCourse = tasks.filter(t => !t.courseId);
-    const noCd = noCourse.filter(t => t.done).length;
     if (noCourse.length > 0) {
-      byCourse.push({ course: { id: '', name: 'Sin curso', color: 'var(--text-faint)', code: '', teacher: '', createdAt: '' }, total: noCourse.length, done: noCd });
+      byCourse.push({
+        course: { id: '', name: 'Sin curso', color: 'var(--text-mute)', code: '', teacher: '', createdAt: '' },
+        total: noCourse.length,
+        done: noCourse.filter(t => t.done).length,
+      });
     }
 
-    // Priority distribution (pending only)
     const prioCounts = { low: 0, medium: 0, high: 0, urgent: 0 };
     tasks.filter(t => !t.done).forEach(t => { prioCounts[computeEffectivePriority(t)]++; });
 
-    return { total, done, pending, pct, weekDays, weekCounts, weekMax, streak, bestDay, byCourse, prioCounts };
+    return { total, done, pending, pct, completedToday, weekDays, weekCounts, weekMax, weekTotal, streak, byCourse, prioCounts };
   }, [tasks, courses]);
 
   const PRIO_CONFIG = [
-    { key: 'urgent' as const, label: 'Urgente', color: 'var(--prio-urgent)' },
-    { key: 'high'   as const, label: 'Alta',    color: 'var(--prio-high)' },
-    { key: 'medium' as const, label: 'Media',   color: 'var(--prio-medium)' },
-    { key: 'low'    as const, label: 'Baja',    color: 'var(--prio-low)' },
+    { key: 'urgent' as const, label: 'Urgente', color: 'var(--prio-urgent)', soft: 'var(--prio-urgent-soft)' },
+    { key: 'high'   as const, label: 'Alta',    color: 'var(--prio-high)',   soft: 'var(--prio-high-soft)' },
+    { key: 'medium' as const, label: 'Media',   color: 'var(--prio-medium)', soft: 'var(--prio-medium-soft)' },
+    { key: 'low'    as const, label: 'Baja',    color: 'var(--prio-low)',    soft: 'var(--prio-low-soft)' },
   ];
-  const maxPrio = Math.max(...Object.values(stats.prioCounts), 1);
+  const prioTotal = Object.values(stats.prioCounts).reduce((a, b) => a + b, 0);
+
+  /* ── Empty state ── */
+  if (stats.total === 0) {
+    return (
+      <div className="page-content">
+        <div className="section-header">
+          <h1 style={{ fontSize: '1.5rem', fontWeight: 700 }}>Estadísticas</h1>
+        </div>
+        <div className="empty-state" style={{ marginTop: 'var(--sp-8)' }}>
+          <div className="empty-state__art"><TrendingUp size={52} /></div>
+          <div className="empty-state__title">Sin datos aún</div>
+          <div className="empty-state__text">Crea y completa tareas para ver tus estadísticas.</div>
+        </div>
+      </div>
+    );
+  }
+
+  const ringSize = isSmall ? 80 : 100;
 
   return (
     <div className="page-content">
-      <motion.div
-        className="greeting-header"
-        initial={{ opacity: 0, y: -8 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3 }}
-      >
-        <h1 className="greeting-text" style={{ fontSize: '1.5rem' }}>Estadísticas 📊</h1>
-        <p className="greeting-sub">Tu rendimiento de un vistazo.</p>
-      </motion.div>
+      <div className="section-header" style={{ marginBottom: 'var(--sp-4)' }}>
+        <h1 style={{ fontSize: '1.5rem', fontWeight: 700 }}>Estadísticas</h1>
+      </div>
 
-      <motion.div
-        variants={container}
-        initial="hidden"
-        animate="show"
-        style={{ display: 'flex', flexDirection: 'column', gap: 'var(--sp-5)' }}
-      >
+      <motion.div variants={container} initial="hidden" animate="show" className="sv2-layout">
 
-        {/* ── Top KPI cards ── */}
-        <motion.div variants={item} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 'var(--sp-3)' }}>
-          {/* Completion rate */}
-          <div className="stat-card" style={{ alignItems: 'center', textAlign: 'center' }}>
-            <RingProgress pct={stats.pct} color="var(--success)" />
-            <div className="stat-card__value" style={{ color: 'var(--success)', fontSize: '1.5rem' }}>{stats.pct}%</div>
-            <div className="stat-card__label">Completadas</div>
-            <div className="stat-card__sub">{stats.done} de {stats.total}</div>
+        {/* ══ 1. HERO CARD ══ */}
+        <motion.div variants={item} className="sv2-hero">
+          {/* decorative blobs */}
+          <div className="sv2-hero__blob sv2-hero__blob--1" />
+          <div className="sv2-hero__blob sv2-hero__blob--2" />
+
+          <div className="sv2-hero__ring">
+            <RingProgress pct={stats.pct} size={ringSize} stroke={isSmall ? 7 : 9} />
+            <div className="sv2-hero__pct" style={{ fontSize: isSmall ? '1.1rem' : '1.4rem' }}>
+              {stats.pct}%
+            </div>
           </div>
 
-          {/* Pending */}
-          <div className="stat-card" style={{ alignItems: 'center', textAlign: 'center' }}>
-            <div className="stat-card__icon" style={{ background: 'var(--accent-soft)', color: 'var(--accent)' }}>
-              <Target size={18} />
+          <div className="sv2-hero__body">
+            <div className="sv2-hero__eyebrow">Progreso general</div>
+            <div className="sv2-hero__headline">
+              {stats.done} de {stats.total}{' '}
+              <span style={{ opacity: 0.75 }}>tareas completadas</span>
             </div>
-            <div className="stat-card__value" style={{ color: 'var(--accent)' }}>{stats.pending}</div>
-            <div className="stat-card__label">Pendientes</div>
-          </div>
-
-          {/* Streak */}
-          <div className="stat-card" style={{ alignItems: 'center', textAlign: 'center' }}>
-            <div className="stat-card__icon" style={{ background: 'color-mix(in srgb, var(--warn) 15%, transparent)', color: 'var(--warn)' }}>
-              <Flame size={18} />
+            <div className="sv2-hero__chips">
+              <span className="sv2-chip sv2-chip--white">
+                {stats.pending} pendiente{stats.pending !== 1 ? 's' : ''}
+              </span>
+              {stats.completedToday > 0 && (
+                <span className="sv2-chip sv2-chip--bright">
+                  +{stats.completedToday} hoy
+                </span>
+              )}
+              {stats.streak > 0 && (
+                <span className="sv2-chip sv2-chip--fire">
+                  🔥 {stats.streak} día{stats.streak !== 1 ? 's' : ''}
+                </span>
+              )}
             </div>
-            <div className="stat-card__value" style={{ color: 'var(--warn)' }}>{stats.streak}</div>
-            <div className="stat-card__label">Racha</div>
-            <div className="stat-card__sub">{stats.streak === 1 ? 'día' : 'días'} seguidos</div>
-          </div>
-
-          {/* Best day */}
-          <div className="stat-card" style={{ alignItems: 'center', textAlign: 'center' }}>
-            <div className="stat-card__icon" style={{ background: 'var(--success-soft)', color: 'var(--success)' }}>
-              <Award size={18} />
-            </div>
-            <div className="stat-card__value" style={{ color: 'var(--success)' }}>{stats.bestDay?.[1] || 0}</div>
-            <div className="stat-card__label">Mejor día</div>
-            <div className="stat-card__sub">esta semana</div>
           </div>
         </motion.div>
 
-        {/* ── Weekly activity bar chart ── */}
-        <motion.div variants={item} className="stat-card" style={{ alignItems: 'stretch' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--sp-2)', marginBottom: 'var(--sp-3)' }}>
-            <TrendingUp size={16} style={{ color: 'var(--accent)' }} />
-            <span style={{ fontWeight: 600, fontSize: '0.9375rem' }}>Actividad semanal</span>
+        {/* ══ 2. KPI STRIP ══ — 4 metrics unified in one horizontal card */}
+        <motion.div variants={item} className="sv2-kpi-strip">
+
+          <div className="sv2-kpi-item">
+            <div className="sv2-kpi-item__icon" style={{ background: 'var(--success-soft)', color: 'var(--success)' }}>
+              <CalendarCheck size={16} />
+            </div>
+            <div className="sv2-kpi-item__num" style={{ color: 'var(--success)' }}>{stats.completedToday}</div>
+            <div className="sv2-kpi-item__label">Hoy</div>
           </div>
-          <div style={{ display: 'flex', gap: 'var(--sp-1)', alignItems: 'flex-end' }}>
+
+          <div className="sv2-kpi-sep" />
+
+          <div className="sv2-kpi-item">
+            <div className="sv2-kpi-item__icon" style={{ background: 'var(--warn-soft)', color: 'var(--warn)' }}>
+              <Flame size={16} />
+            </div>
+            <div className="sv2-kpi-item__num" style={{ color: 'var(--warn)' }}>{stats.streak}</div>
+            <div className="sv2-kpi-item__label">Racha</div>
+          </div>
+
+          <div className="sv2-kpi-sep" />
+
+          <div className="sv2-kpi-item">
+            <div className="sv2-kpi-item__icon" style={{ background: 'var(--accent-soft)', color: 'var(--accent)' }}>
+              <Target size={16} />
+            </div>
+            <div className="sv2-kpi-item__num" style={{ color: 'var(--accent)' }}>{stats.pending}</div>
+            <div className="sv2-kpi-item__label">Pendientes</div>
+          </div>
+
+          <div className="sv2-kpi-sep" />
+
+          <div className="sv2-kpi-item">
+            <div className="sv2-kpi-item__icon" style={{ background: 'var(--info-soft)', color: 'var(--info)' }}>
+              <ListTodo size={16} />
+            </div>
+            <div className="sv2-kpi-item__num" style={{ color: 'var(--info)' }}>{stats.total}</div>
+            <div className="sv2-kpi-item__label">Total</div>
+          </div>
+
+        </motion.div>
+
+        {/* ══ 3. WEEKLY CHART ══ */}
+        <motion.div variants={item} className="sv2-card">
+          <div className="sv2-card__header">
+            <TrendingUp size={16} style={{ color: 'var(--accent)' }} />
+            <span className="sv2-card__title">Actividad semanal</span>
+            <span className="sv2-badge">{stats.weekTotal} completadas</span>
+          </div>
+          <div className="sv2-chart">
             {stats.weekDays.map(d => (
               <DayBar
                 key={d}
@@ -227,41 +294,30 @@ export default function StatsView() {
               />
             ))}
           </div>
-          <p style={{ fontSize: '0.75rem', color: 'var(--text-faint)', marginTop: 'var(--sp-2)', textAlign: 'center' }}>
-            Tareas completadas por día (últimos 7 días)
-          </p>
         </motion.div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 'var(--sp-5)' }}>
+        {/* ══ 4. BOTTOM ROW ══ */}
+        <div className="sv2-bottom-row">
 
-          {/* ── By-course breakdown ── */}
+          {/* Por curso */}
           {stats.byCourse.length > 0 && (
-            <motion.div variants={item} className="stat-card" style={{ alignItems: 'stretch' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--sp-2)', marginBottom: 'var(--sp-3)' }}>
+            <motion.div variants={item} className="sv2-card sv2-card--half">
+              <div className="sv2-card__header">
                 <BookOpen size={16} style={{ color: 'var(--info)' }} />
-                <span style={{ fontWeight: 600, fontSize: '0.9375rem' }}>Por curso</span>
+                <span className="sv2-card__title">Por curso</span>
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--sp-3)' }}>
+              <div className="sv2-course-list">
                 {stats.byCourse.map(({ course, total, done }) => {
                   const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+                  const color = course.color !== 'var(--text-mute)' ? course.color : 'var(--text-mute)';
                   return (
-                    <div key={course.id}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--sp-2)', marginBottom: 4 }}>
-                        <div style={{ width: 8, height: 8, borderRadius: '50%', background: course.color, flexShrink: 0 }} />
-                        <span style={{ flex: 1, fontSize: '0.875rem', fontWeight: 500 }}>{course.name}</span>
-                        <span style={{ fontSize: '0.8125rem', color: 'var(--text-mute)' }}>
-                          {done}/{total} ({pct}%)
-                        </span>
+                    <div key={course.id} className="sv2-course-row">
+                      <MiniRing pct={pct} color={color} />
+                      <div className="sv2-course-row__info">
+                        <span className="sv2-course-row__name">{course.name}</span>
+                        <span className="sv2-course-row__sub">{done}/{total} tareas</span>
                       </div>
-                      <div style={{ height: 5, background: 'var(--border)', borderRadius: 99, overflow: 'hidden' }}>
-                        <div style={{
-                          height: '100%',
-                          width: `${pct}%`,
-                          background: course.color !== 'var(--text-faint)' ? course.color : 'var(--text-faint)',
-                          borderRadius: 99,
-                          transition: 'width 0.5s ease',
-                        }} />
-                      </div>
+                      <span className="sv2-course-row__pct" style={{ color }}>{pct}%</span>
                     </div>
                   );
                 })}
@@ -269,56 +325,78 @@ export default function StatsView() {
             </motion.div>
           )}
 
-          {/* ── Priority distribution ── */}
-          <motion.div variants={item} className="stat-card" style={{ alignItems: 'stretch' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--sp-2)', marginBottom: 'var(--sp-3)' }}>
-              <CheckCircle2 size={16} style={{ color: 'var(--accent)' }} />
-              <span style={{ fontWeight: 600, fontSize: '0.9375rem' }}>Prioridad pendiente</span>
+          {/* Pendientes por prioridad */}
+          <motion.div variants={fadeIn} className="sv2-card sv2-card--half">
+            <div className="sv2-card__header">
+              <Zap size={16} style={{ color: 'var(--prio-urgent)' }} />
+              <span className="sv2-card__title">Por prioridad</span>
+              {stats.pending > 0 && (
+                <span className="sv2-badge" style={{ background: 'var(--prio-urgent-soft)', color: 'var(--prio-urgent)' }}>
+                  {stats.pending} activas
+                </span>
+              )}
             </div>
+
             {stats.pending === 0 ? (
-              <div style={{ textAlign: 'center', padding: 'var(--sp-5) 0', color: 'var(--text-faint)', fontSize: '0.875rem' }}>
-                Sin tareas pendientes
+              <div className="sv2-empty-panel">
+                <Award size={32} style={{ opacity: 0.2 }} />
+                <span>¡Sin pendientes!</span>
               </div>
             ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--sp-3)' }}>
-                {PRIO_CONFIG.map(({ key, label, color }) => {
-                  const count = stats.prioCounts[key];
-                  const barPct = Math.round((count / maxPrio) * 100);
-                  return (
-                    <div key={key}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--sp-2)', marginBottom: 4 }}>
-                        <div style={{ width: 8, height: 8, borderRadius: '50%', background: color, flexShrink: 0 }} />
-                        <span style={{ flex: 1, fontSize: '0.875rem' }}>{label}</span>
-                        <span style={{ fontSize: '0.8125rem', color: 'var(--text-mute)', fontVariantNumeric: 'tabular-nums' }}>
+              <>
+                <div className="sv2-stacked-bar">
+                  {PRIO_CONFIG.map(({ key, color }) => {
+                    const count = stats.prioCounts[key];
+                    if (count === 0) return null;
+                    const w = prioTotal > 0 ? (count / prioTotal) * 100 : 0;
+                    return (
+                      <motion.div
+                        key={key}
+                        className="sv2-stacked-bar__seg"
+                        initial={{ width: 0 }}
+                        whileInView={{ width: `${w}%` }}
+                        viewport={{ once: true }}
+                        transition={{ duration: 0.9, ease: 'easeOut' }}
+                        style={{ background: color }}
+                        title={`${count} tarea${count !== 1 ? 's' : ''}`}
+                      />
+                    );
+                  })}
+                </div>
+
+                <div className="sv2-prio-list">
+                  {PRIO_CONFIG.map(({ key, label, color, soft }) => {
+                    const count = stats.prioCounts[key];
+                    const pct   = prioTotal > 0 ? Math.round((count / prioTotal) * 100) : 0;
+                    return (
+                      <div key={key} className={`sv2-prio-row ${count === 0 ? 'sv2-prio-row--empty' : ''}`}>
+                        <span className="sv2-prio-dot" style={{ background: color }} />
+                        <span className="sv2-prio-label">{label}</span>
+                        <div className="sv2-prio-bar-track">
+                          <motion.div
+                            className="sv2-prio-bar-fill"
+                            initial={{ width: 0 }}
+                            whileInView={{ width: `${pct}%` }}
+                            viewport={{ once: true }}
+                            transition={{ duration: 0.8, ease: 'easeOut' }}
+                            style={{
+                              background: count > 0 ? color : 'var(--border)',
+                              boxShadow: count > 0 ? `0 0 8px ${soft}` : 'none',
+                            }}
+                          />
+                        </div>
+                        <span className="sv2-prio-count" style={{ color: count > 0 ? color : 'var(--text-faint)' }}>
                           {count}
                         </span>
                       </div>
-                      <div style={{ height: 5, background: 'var(--border)', borderRadius: 99, overflow: 'hidden' }}>
-                        <div style={{
-                          height: '100%',
-                          width: `${barPct}%`,
-                          background: color,
-                          borderRadius: 99,
-                          transition: 'width 0.5s ease',
-                          opacity: count === 0 ? 0 : 1,
-                        }} />
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
+                    );
+                  })}
+                </div>
+              </>
             )}
           </motion.div>
-        </div>
 
-        {/* ── Empty state ── */}
-        {stats.total === 0 && (
-          <motion.div variants={item} style={{ textAlign: 'center', padding: 'var(--sp-10) 0', color: 'var(--text-faint)' }}>
-            <TrendingUp size={48} style={{ marginBottom: 'var(--sp-3)', opacity: 0.3 }} />
-            <p style={{ fontSize: '1rem' }}>Aún no hay datos para mostrar.</p>
-            <p style={{ fontSize: '0.875rem' }}>Crea algunas tareas y completa algunas para ver tus estadísticas.</p>
-          </motion.div>
-        )}
+        </div>
 
       </motion.div>
     </div>
